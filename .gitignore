@@ -1,0 +1,27 @@
+# VS Output
+**/Debug/*
+**/Release/*
+**/bin/*
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Project specific files
+Log.html
+
+# Misc
+**/battery/*
+**/roms/*
+ref/*

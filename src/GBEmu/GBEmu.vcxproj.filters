@@ -1,0 +1,133 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Emulator">
+      <UniqueIdentifier>{73060063-c30d-4f32-85fc-a1ad52972c83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Modules">
+      <UniqueIdentifier>{4c53712f-c494-4866-80ae-598f6656692b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Modules\Cartridge">
+      <UniqueIdentifier>{b01887f5-e3e5-414c-8e20-99af5ab5b233}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Debug">
+      <UniqueIdentifier>{0df682c5-349b-4caf-bc84-2642edbfe840}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Util">
+      <UniqueIdentifier>{0e3f5756-2219-4cb8-b02b-a5ad26ac77a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NFont">
+      <UniqueIdentifier>{d11a4f94-ec5f-4a3a-9fc1-cc505b9beae6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="emutypes.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="GBEmulator.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="GBCartridge.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBCpu.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBGpu.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBJoypad.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBMem.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBTimer.h">
+      <Filter>Emulator\Modules</Filter>
+    </ClInclude>
+    <ClInclude Include="GBMemBankController0.h">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClInclude>
+    <ClInclude Include="GBMemBankController1.h">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClInclude>
+    <ClInclude Include="GBMemBankController2.h">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClInclude>
+    <ClInclude Include="GBMemBankController3.h">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClInclude>
+    <ClInclude Include="IGBMemBankController.h">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClInclude>
+    <ClInclude Include="GBCpuUnitTest.h">
+      <Filter>Emulator\Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="CLog.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="CProfileManager.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="CProfiler.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="CTimer.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GBEmulator.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="GBCartridge.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBCpu.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBGpu.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBJoypad.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBMem.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBTimer.cpp">
+      <Filter>Emulator\Modules</Filter>
+    </ClCompile>
+    <ClCompile Include="GBMemBankController0.cpp">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClCompile>
+    <ClCompile Include="GBMemBankController1.cpp">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClCompile>
+    <ClCompile Include="GBMemBankController2.cpp">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClCompile>
+    <ClCompile Include="GBMemBankController3.cpp">
+      <Filter>Emulator\Modules\Cartridge</Filter>
+    </ClCompile>
+    <ClCompile Include="GBCpuUnitTest.cpp">
+      <Filter>Emulator\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="CLog.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="CProfileManager.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="CProfiler.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="CTimer.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\NFont\NFont.cpp">
+      <Filter>NFont</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

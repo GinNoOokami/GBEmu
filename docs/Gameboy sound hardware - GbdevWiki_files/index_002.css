@@ -1,0 +1,20 @@
+/* CSS placed here will be applied to all skins */
+.rotate{
+-webkit-transform: rotate(-90deg); 
+-moz-transform: rotate(-90deg);
+-o-transform: rotate(-90deg);
+}
+
+.smaller{
+font-size: 75%;
+}
+.passed{
+color: #0c0;
+}
+.failed{
+color: #c00;
+}
+
+.toptable td{
+vertical-align:top
+}
