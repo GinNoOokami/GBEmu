@@ -19,6 +19,7 @@
 
 #include <memory.h>
 #include <assert.h>
+#include <string.h>
 
 //====================================================================================================
 // Static initializers
@@ -33,7 +34,10 @@ const uint16 GBCartridge::CARTRIDGE_ENTRY_POINT = 0x100;
 GBCartridge::GBCartridge( GBMem* pMemoryModule ) :
 	m_pMem( pMemoryModule ),
 	m_pRom( NULL ),
-	m_pRam( NULL )
+	m_pRam( NULL ),
+	m_pMemBankController( NULL ),
+	m_szBatteryDirectory( NULL ),
+	m_bLoaded( false )
 {
 }
 
@@ -43,10 +47,22 @@ GBCartridge::~GBCartridge()
 }
 
 //----------------------------------------------------------------------------------------------------
+void GBCartridge::Reset()
+{
+	if( m_bLoaded )
+	{
+		memset( m_pRam, 0, sizeof( m_pRam ) );
+		m_pMem->LoadMemory( m_pRom, 0, sizeof( ubyte ) * 0x4000 );
+		m_pMem->SetMemBankController( CreateMemBankController( m_oHeader.u8CartridgeType ) );
+
+		LoadBattery();
+	}
+}
+
+//----------------------------------------------------------------------------------------------------
 bool GBCartridge::LoadFromFile( const char *szFilepath, const char* szBatteryDirectory )
 {
 	FILE*	pFile			= NULL;
-	FILE*	pBatteryFile	= NULL;
 	bool	bLoaded			= false;
 		
 	fopen_s( &pFile, szFilepath, "rb" );
@@ -66,17 +82,8 @@ bool GBCartridge::LoadFromFile( const char *szFilepath, const char* szBatteryDir
 		if(		bLoaded
 			&&	szBatteryDirectory )
 		{
-			char szBatteryFilepath[ 1024 ] = { 0 };
-			sprintf( szBatteryFilepath, "%s%s%s", szBatteryDirectory, m_oHeader.szTitle, ".sav" );
-
-			fopen_s( &pBatteryFile, szBatteryFilepath, "rb" );
-
-			if( NULL != pBatteryFile )
-			{
-				LoadBatteryFile( pBatteryFile );
-
-				fclose( pBatteryFile );
-			}
+			m_szBatteryDirectory = szBatteryDirectory;
+			LoadBattery();
 		}
 
 		fclose( pFile );
@@ -117,7 +124,7 @@ void GBCartridge::FlushRamToSaveFile( const char *szBatteryDirectory )
 	FILE*	pBatteryFile	= NULL;
 	char szBatteryFilepath[ 1024 ] = { 0 };
 
-	sprintf( szBatteryFilepath, "%s%s%s", szBatteryDirectory, m_oHeader.szTitle, ".sav" );
+	sprintf_s( szBatteryFilepath, "%s%s%s", szBatteryDirectory, m_oHeader.szTitle, ".sav" );
 
 	fopen_s( &pBatteryFile, szBatteryFilepath, "wb" );
 	if( NULL != pBatteryFile )
@@ -126,6 +133,31 @@ void GBCartridge::FlushRamToSaveFile( const char *szBatteryDirectory )
 
 		fclose( pBatteryFile );
 	}
+}
+
+//----------------------------------------------------------------------------------------------------
+void GBCartridge::Unload()
+{
+	if( NULL != m_pRom )
+	{
+		delete m_pRom;
+		m_pRom = NULL;
+	}
+
+	if( NULL != m_pRam )
+	{
+		delete m_pRam;
+		m_pRam = NULL;
+	}
+
+	if( NULL != m_pMemBankController )
+	{
+		m_pMem->SetMemBankController( NULL );
+		delete m_pMemBankController;
+		m_pMemBankController = NULL;
+	}
+
+	m_bLoaded = false;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -156,34 +188,48 @@ bool GBCartridge::LoadCartridge( FILE* pFile )
 	m_pRom = new ubyte[ u32RomSize ];
 	memset( m_pRom, 0, u32RomSize );
 
+	rewind( pFile );
+	fread_s( m_pRom, u32RomSize, 1, u32RomSize, pFile );
+
 	if( u32RamSize < 2048 )
 	{
 		u32RamSize = 2048;
 	}
-		m_pRam = new ubyte[ u32RamSize ];
-		memset( m_pRam, 0, u32RamSize );
+	m_pRam = new ubyte[ u32RamSize ];
 
-	rewind( pFile );
-	fread_s( m_pRom, u32RomSize, 1, u32RomSize, pFile );
+	m_bLoaded = true;
 
-	m_pMem->LoadMemory( m_pRom, 0, sizeof( ubyte ) * 0x4000 );
-	m_pMem->SetMemBankController( CreateMemBankController( m_oHeader.u8CartridgeType ) );
+	Reset();
 
 	return true;
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBCartridge::LoadBatteryFile(FILE *pFile)
+void GBCartridge::LoadBattery()
 {
-	uint32 u32RamSize = GetRamSize();
-	
-	fread_s( m_pRam, u32RamSize, 1, u32RamSize, pFile );
+	FILE*	pBatteryFile				= NULL;
+	char	szBatteryFilepath[ 1024 ]	= { 0 };
+
+	if( m_szBatteryDirectory )
+	{
+		sprintf_s( szBatteryFilepath, "%s%s%s", m_szBatteryDirectory, m_oHeader.szTitle, ".sav" );
+
+		fopen_s( &pBatteryFile, szBatteryFilepath, "rb" );
+		if( NULL != pBatteryFile )
+		{
+			uint32 u32RamSize = GetRamSize();
+
+			fread_s( m_pRam, u32RamSize, 1, u32RamSize, pBatteryFile );
+
+			fclose( pBatteryFile );
+		}
+	}
 }
 
 //----------------------------------------------------------------------------------------------------
 IGBMemBankController* GBCartridge::CreateMemBankController( ubyte u8CartridgeType )
 {
-	IGBMemBankController* pMBC;
+	IGBMemBankController* pMBC	= NULL;
 
 	// 0-ROM ONLY				12-ROM+MBC3+RAM
 	// 1-ROM+MBC1				13-ROM+MBC3+RAM+BATT
@@ -199,6 +245,12 @@ IGBMemBankController* GBCartridge::CreateMemBankController( ubyte u8CartridgeTyp
 	// F-ROM+MBC3+TIMER+BATT	FF - Hudson HuC-1
 	// 10-ROM+MBC3+TIMER+RAM+BATT
 	// 11-ROM+MBC3
+
+	if( NULL != m_pMemBankController )
+	{
+		delete m_pMemBankController;
+		m_pMemBankController = NULL;
+	}
 
 	switch( u8CartridgeType )
 	{

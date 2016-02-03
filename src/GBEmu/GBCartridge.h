@@ -55,18 +55,22 @@ public:
     GBCartridge( GBMem* pMemoryModule );
     ~GBCartridge();
 
+	void					Reset();
+
 	bool					LoadFromFile( const char* szFilepath, const char* szBatteryDirectory = NULL );
 	bool					HasBattery() const;
 	bool					IsRamDirty() const;
 	void					FlushRamToSaveFile( const char* szBatteryDirectory );
+	void					Unload();
 
+	inline bool				IsLoaded() const						{ return m_bLoaded;					}
 	inline ubyte			ReadRom( uint16 u16Address )			{ return m_pRom[ u16Address ];		}
 
 private:
 	bool					ValidateCartridgeHeader( ubyte* pHeaderData );
 	void					LoadCartridgeHeader( ubyte* pHeaderData );
 	bool					LoadCartridge( FILE* pFile );
-	void					LoadBatteryFile( FILE* pFile );
+	void					LoadBattery();
 	IGBMemBankController*	CreateMemBankController( ubyte u8CartridgeType );
 	uint32					GetRomSize() const;
 	uint32					GetRamSize() const;
@@ -78,6 +82,10 @@ private:
 
 	GBMem*					m_pMem;
 	IGBMemBankController*	m_pMemBankController;
+
+	bool					m_bLoaded;
+
+	const char*				m_szBatteryDirectory;
 };
 
 #endif

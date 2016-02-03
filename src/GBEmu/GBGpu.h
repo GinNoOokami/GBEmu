@@ -93,6 +93,8 @@ public:
     GBGpu( GBEmulator* pEmulator, GBMem* pMemoryModule );
     ~GBGpu( void );
 
+	void			Reset();
+
 	void			Update( uint32 u32ElapsedClockCycles );
 	const uint32*	GetScreenData() const;
 

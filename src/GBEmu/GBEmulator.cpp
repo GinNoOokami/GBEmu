@@ -66,7 +66,12 @@ GBEmulator::~GBEmulator()
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::Initialize()
 {
-	SDL_Init( SDL_INIT_EVERYTHING );
+	if( -1 == SDL_Init( SDL_INIT_EVERYTHING ) )
+	{
+		fprintf( stderr, "Failed to initialize SDL!\n" );
+		exit( 1 );
+	}
+
 	TTF_Init();
 
 	SDL_WM_SetCaption( "Gameboy Emulator", NULL );
@@ -77,7 +82,7 @@ void GBEmulator::Initialize()
 		_mkdir( GB_BATTERY_DIRECTORY );
 	}
 
-	m_pFrameSurface = SDL_SetVideoMode( GBScreenWidth * ScreenScaleFactor, GBScreenHeight * ScreenScaleFactor, 32, SDL_DOUBLEBUF );
+	m_pFrameSurface = SDL_SetVideoMode( GBScreenWidth * ScreenScaleFactor, GBScreenHeight * ScreenScaleFactor, 32, SDL_ANYFORMAT | SDL_DOUBLEBUF );
 
 	m_pMem			= new GBMem;
 	m_pTimer		= new GBTimer( this, m_pMem );
@@ -164,19 +169,26 @@ void GBEmulator::Run()
 {
 	m_bRunning = true;
 
-	//LoadCartridge( "../roms/test/cpu_instrs/individual/02-interrupts.gb" );
-	//LoadCartridge( "../roms/test/cpu_instrs/cpu_instrs.gb" );
-	//LoadCartridge( "../roms/tetris.gb" );
-	//LoadCartridge( "../roms/zelda.gb" );
-	//LoadCartridge( "../roms/test/gbtest.gb" );
-	//LoadCartridge( "../roms/mario.gb" );
-	//LoadCartridge( "../roms/ffl2.gb" );
-	//LoadCartridge( "../roms/ffa.gb" );
-	//LoadCartridge( "../roms/rayearth2.gb" );
-	//LoadCartridge( "../roms/dbz.gb" );
-	LoadCartridge( "roms/Pokemon Blue.gb" );
+#ifdef _DEBUG
+	FILE * file = NULL;
+	char szBuffer[ 1024 ];
 
-	m_fNextFrame = static_cast<float>( SDL_GetTicks() );
+	fopen_s( &file, "debug_load.ini", "r" );
+	if( NULL != file )
+	{
+		while( fgets( szBuffer, 1024, file ) )
+		{
+			if(		strlen( szBuffer ) > 0
+				&&	szBuffer[ 0 ] != ';' )
+			{
+				LoadCartridge( szBuffer );
+				break;
+			}
+		}
+		fclose( file );
+	}
+#endif
+
 	while( m_bRunning )
 	{
 		SDL_Event oEvent;
@@ -203,7 +215,17 @@ void GBEmulator::Run()
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::Reset()
 {
+	m_u32LastFrameCycles	= 0;
+
+	m_fElapsedTime			= 0.f;
+	m_fNextFrame			= static_cast<float>( SDL_GetTicks() );
+
+	m_pMem->Reset();
+	m_pTimer->Reset();
 	m_pCpu->Reset();
+	m_pGpu->Reset();
+	m_pJoypad->Reset();
+	m_pCartridge->Reset();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -332,6 +354,7 @@ void GBEmulator::Draw()
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::StopAndUnloadCartridge()
 {
+	m_pCartridge->Unload();
 	m_bCartridgeLoaded = false;
 	
 	Reset();
@@ -367,6 +390,9 @@ void GBEmulator::SimulateInput( SDL_Event *pEvent )
 			break;
 		case SDLK_RIGHT:
 			button = ButtonRight;
+			break;
+		case SDLK_r:
+			Reset();
 			break;
 	}
 

@@ -44,14 +44,27 @@ ubyte GBMem::GBBios[ 0x100 ] =
 //====================================================================================================
 
 GBMem::GBMem( void ) :
-	m_bBiosEnabled( true )
+	m_pMemBankController( NULL ),
+	m_bBiosEnabled( true ),
+	m_bResetTimer( false )
 {
-	memset( m_Memory, 0, sizeof( m_Memory ) );
+	Reset();
 }
 
 //----------------------------------------------------------------------------------------------------
 GBMem::~GBMem( void )
 {
+}
+
+//----------------------------------------------------------------------------------------------------
+void GBMem::Reset()
+{
+	m_pMemBankController	= NULL;
+
+	m_bBiosEnabled			= true;
+	m_bResetTimer			= false;
+
+	memset( m_Memory, 0, sizeof( m_Memory ) );
 }
 
 //----------------------------------------------------------------------------------------------------

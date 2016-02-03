@@ -25,10 +25,7 @@ GBGpu::GBGpu( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
 	m_bIsVSync( false ),
 	m_bIsHBlank( false )
 {
-	for( int i = 0; i < GBScreenWidth * GBScreenHeight; ++i )
-	{
-		m_u32ScreenData[ i ] = ColorWhite;
-	}
+	Reset();
 
 	m_PaletteLookup[ 0 ] = ColorWhite;
 	m_PaletteLookup[ 1 ] = ColorLight;
@@ -39,7 +36,20 @@ GBGpu::GBGpu( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
 //----------------------------------------------------------------------------------------------------
 GBGpu::~GBGpu()
 {
+}
 
+//----------------------------------------------------------------------------------------------------
+void GBGpu::Reset()
+{
+	for( int i = 0; i < GBScreenWidth * GBScreenHeight; ++i )
+	{
+		m_u32ScreenData[ i ] = ColorWhite;
+	}
+
+	m_u32ScanTime	= 0;
+
+	m_bIsVSync		= false;
+	m_bIsHBlank		= false;
 }
 
 //----------------------------------------------------------------------------------------------------

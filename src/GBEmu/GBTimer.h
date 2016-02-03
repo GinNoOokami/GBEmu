@@ -40,6 +40,8 @@ public:
 	GBTimer( GBEmulator* pEmulator, GBMem* pMemoryModule );
     ~GBTimer( void );
 
+	void			Reset();
+
 	void			Update( uint32 u32ElapsedClockCycles );
 	inline	uint32	GetTotalCycles()								{ return m_u32TimerCycles;					}
 

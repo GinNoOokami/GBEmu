@@ -31,6 +31,13 @@ GBTimer::~GBTimer()
 }
 
 //----------------------------------------------------------------------------------------------------
+void GBTimer::Reset()
+{
+	m_u32TimerCycles	= 0;
+	m_u32TimerDiv		= 0;
+}
+
+//----------------------------------------------------------------------------------------------------
 void GBTimer::Update( uint32 u32ElapsedClockCycles )
 {
 	ubyte u8TimerControl = m_pMem->ReadMMIO( MMIOTimerControl );

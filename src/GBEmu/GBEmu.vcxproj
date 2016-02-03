@@ -48,7 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>../lib/SDL-1.2.15/include;../lib/SDL_ttf-2.0.11\include;$(IncludePath)</IncludePath>
+    <IncludePath>../lib/SDL-1.2.15/include;../lib/SDL_ttf-2.0.11\include;../lib/NFont;$(IncludePath)</IncludePath>
     <LibraryPath>../lib/SDL-1.2.15\lib\x86;../lib\SDL_ttf-2.0.11\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

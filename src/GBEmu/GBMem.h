@@ -70,6 +70,8 @@ public:
     GBMem( void );
     ~GBMem( void );
 
+	void					Reset();
+
 	inline bool				IsBootRomEnabled()									{ return m_bBiosEnabled;			}
 
 	void					LoadMemory( ubyte* pData, uint32 u32Offset, size_t size );

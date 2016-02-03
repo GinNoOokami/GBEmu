@@ -47,6 +47,8 @@ public:
 	GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule );
 	~GBJoypad();
 
+	void			Reset();
+
 	void			Update();
 	void			SimulateKeyDown( JoypadButton button );
 	void			SimulateKeyUp( JoypadButton button );

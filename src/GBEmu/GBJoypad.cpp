@@ -20,7 +20,7 @@ GBJoypad::GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
 	m_pMem( pMemoryModule ),
 	m_u32KeyStatus( -1 )
 {
-	m_pMem->WriteMMIO( MMIOJoypad, 0xFF );
+	Reset();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -29,6 +29,12 @@ GBJoypad::~GBJoypad()
 
 }
 
+//----------------------------------------------------------------------------------------------------
+void GBJoypad::Reset()
+{
+	m_u32KeyStatus = -1;
+	m_pMem->WriteMMIO( MMIOJoypad, 0xFF );
+}
 
 //----------------------------------------------------------------------------------------------------
 void GBJoypad::Update()
