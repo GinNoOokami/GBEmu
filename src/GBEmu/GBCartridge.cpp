@@ -55,6 +55,7 @@ void GBCartridge::Reset()
 		m_pMem->LoadMemory( m_pRom, 0, sizeof( ubyte ) * 0x4000 );
 		m_pMem->SetMemBankController( CreateMemBankController( m_oHeader.u8CartridgeType ) );
 
+		// Attempt to load the .sav file for this rom
 		LoadBattery();
 	}
 }
@@ -74,16 +75,10 @@ bool GBCartridge::LoadFromFile( const char *szFilepath, const char* szBatteryDir
 		
 		if( ValidateCartridgeHeader( u8CartridgeHeader ) )
 		{
+			m_szBatteryDirectory = szBatteryDirectory;
+
 			LoadCartridgeHeader( u8CartridgeHeader );
 			bLoaded = LoadCartridge( pFile );
-		}
-		
-		// Attempt to load the .sav file for this rom
-		if(		bLoaded
-			&&	szBatteryDirectory )
-		{
-			m_szBatteryDirectory = szBatteryDirectory;
-			LoadBattery();
 		}
 
 		fclose( pFile );
@@ -156,6 +151,8 @@ void GBCartridge::Unload()
 		delete m_pMemBankController;
 		m_pMemBankController = NULL;
 	}
+
+	m_szBatteryDirectory = NULL;
 
 	m_bLoaded = false;
 }
