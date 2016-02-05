@@ -579,7 +579,25 @@ void GBCpu::Terminate()
 void GBCpu::Reset()
 {
 	m_PC				= 0;
-	m_SP				= 0xFFFE;
+	m_SP				= 0xFFFF;
+
+	m_Registers[ A ]	= 0;
+	m_Registers[ B ]	= 0;
+	m_Registers[ C ]	= 0;
+	m_Registers[ D ]	= 0;
+	m_Registers[ E ]	= 0;
+	m_Registers[ F ]	= 0;
+	m_Registers[ H ]	= 0;
+	m_Registers[ L ]	= 0;
+
+	m_bIME				= true;
+	m_bHalt				= false;
+	m_bStop				= false;
+
+	m_pMem->WriteMMIO( MMIOBiosDisabled, 0x00 );
+
+	/*
+	// Init code to skip bios
 
 	m_Registers[ A ]	= 0x01;
 	m_Registers[ B ]	= 0x00;
@@ -590,13 +608,8 @@ void GBCpu::Reset()
 	m_Registers[ H ]	= 0x01;
 	m_Registers[ L ]	= 0x4D;
 
-	m_bIME				= true;
-	m_bHalt				= false;
-	m_bStop				= false;
+	m_SP				= 0xFFFE;
 
-	m_pMem->WriteMMIO( MMIOBiosDisabled, 0x00 );
-
-	/*
 	[$FF05] = $00   ; TIMA
 	[$FF06] = $00   ; TMA
 	[$FF07] = $00   ; TAC
