@@ -37,6 +37,7 @@ enum MMIO
 	MMIOObjectPalette1			= 0xFF49,
 	MMIOWindowY					= 0xFF4A,
 	MMIOWindowX					= 0xFF4B,
+	MMIOKey1					= 0xFF4D, // CGB only
 	MMIOInterruptFlags			= 0xFF0F,
 	MMIOBiosDisabled			= 0xFF50,
 	MMIOInterruptEnable			= 0xFFFF

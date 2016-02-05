@@ -181,6 +181,16 @@ void GBEmulator::Run()
 			if(		strlen( szBuffer ) > 0
 				&&	szBuffer[ 0 ] != ';' )
 			{
+				char* p = szBuffer;
+				while( NULL != *(p++) )
+				{
+					// NULL out newline char
+					if( *p == '\n' )
+					{
+						*p = '\0';
+					}
+				}
+
 				LoadCartridge( szBuffer );
 				break;
 			}

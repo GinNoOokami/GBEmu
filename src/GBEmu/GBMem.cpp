@@ -99,11 +99,6 @@ ubyte GBMem::ReadMemory( uint16 u16Address )
 		}
 	}
 
-	if( 0xFF4D == u16Address )
-	{
-		return 0xFF;
-	}
-
 	return m_Memory[ u16Address ];
 }
 
@@ -144,6 +139,11 @@ void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 				break;
 
 			case MMIODivider:
+				m_Memory[ u16Address ] = 0;
+				break;
+
+			// KEY1 register not supported by DMG, always read default speed
+			case MMIOKey1:
 				m_Memory[ u16Address ] = 0;
 				break;
 		}
