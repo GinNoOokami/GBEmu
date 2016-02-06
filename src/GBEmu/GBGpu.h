@@ -71,12 +71,12 @@ class GBGpu
 
 	enum VRamAddressMap
 	{
-		BgTileMapSelect0		= 0x9800,
-		BgTileMapSelect1		= 0x9C00,
-		WindowTileMapSelect0	= 0x9800,
-		WindowTileMapSelect1	= 0x9C00,
-		TileDataSelect0			= 0x9000,
-		TileDataSelect1			= 0x8000,
+		BgTileMapSelect0		= 0x9800, /*0=9800-9BFF*/
+		BgTileMapSelect1		= 0x9C00, /*1=9C00-9FFF*/
+		WindowTileMapSelect0	= 0x9800, /*0=9800-9BFF*/
+		WindowTileMapSelect1	= 0x9C00, /*1=9C00-9FFF*/
+		TileDataSelect0			= 0x9000, /*0=8800-97FF*/ // Tile index is -128 to 127, so base address is in the middle of the range (ie - $9000)
+		TileDataSelect1			= 0x8000, /*1=8000-8FFF*/
 		SpriteDataSelect		= 0x8000,
 	};
 

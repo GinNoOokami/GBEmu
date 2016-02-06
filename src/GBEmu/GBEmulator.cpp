@@ -49,6 +49,7 @@ GBEmulator::GBEmulator() :
 	m_pCartridge( NULL ),
 	m_bRunning( false ),
 	m_bCartridgeLoaded( false ),
+	m_bDebugPaused( false ),
 	m_fNextFrame( 0 ),
 	m_fElapsedTime( 0 ),
 	m_u32LastFrameCycles( 0 ),
@@ -82,7 +83,7 @@ void GBEmulator::Initialize()
 		_mkdir( GB_BATTERY_DIRECTORY );
 	}
 
-	m_pFrameSurface = SDL_SetVideoMode( GBScreenWidth * ScreenScaleFactor, GBScreenHeight * ScreenScaleFactor, 32, SDL_ANYFORMAT | SDL_DOUBLEBUF );
+	m_pFrameSurface = SDL_SetVideoMode( GBScreenWidth * kScreenScaleFactor, GBScreenHeight * kScreenScaleFactor, 32, SDL_ANYFORMAT | SDL_DOUBLEBUF );
 
 	m_pMem			= new GBMem;
 	m_pTimer		= new GBTimer( this, m_pMem );
@@ -207,6 +208,8 @@ void GBEmulator::Run()
 			switch( oEvent.type )
 			{
 				case SDL_KEYDOWN:
+					HandleShortcuts( &oEvent );
+					// Intentional fall-through
 				case SDL_KEYUP:
 					SimulateInput( &oEvent );
 					break;
@@ -264,15 +267,11 @@ void GBEmulator::RaiseInterrupt( Interrupt interrupt )
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::Update()
 {
-	const float	k_fMaxCyclesPerFrame	= 70224;
-	const float	k_fFrameRate			= static_cast<float>( GBCpu::CLOCK_SPEED ) / k_fMaxCyclesPerFrame;
+	const float	k_fFrameRate			= static_cast<float>( GBCpu::CLOCK_SPEED ) / static_cast<float>( kMaxCyclesPerFrame );
 	const float	k_fFrameTime			= 1000.f / static_cast<float>( k_fFrameRate );
 
 	if( m_bCartridgeLoaded )
 	{
-		int iFrameCycles	= 0;
-		int iCyclesTaken	= 0;
-
 		m_fElapsedTime += static_cast<float>( SDL_GetTicks() ) - m_fElapsedTime;
 
 		if( m_fElapsedTime >= m_fNextFrame )
@@ -285,35 +284,10 @@ void GBEmulator::Update()
 			// Set the next frame render time
 			m_fNextFrame = m_fElapsedTime - fDelta + k_fFrameTime;
 
-			// Handle the emulation for this frame
-			while( iFrameCycles < k_fMaxCyclesPerFrame )
+			if( !m_bDebugPaused )
 			{
-				iCyclesTaken = 0;
-				{
-					PROFILE( "Cpu::ExecuteOpcode" );
-
-					// Execute the next opcode
-					iCyclesTaken += m_pCpu->ExecuteOpcode();
-				}
-
-				iCyclesTaken += m_pCpu->HandleInterrupts();
-				{
-					PROFILE( "Gpu::Update" );
-
-					// Update the GPU
-					m_pGpu->Update( iCyclesTaken );
-				}
-
-				{
-					PROFILE( "Joypad::Update" );
-					// Update the joypad
-					m_pJoypad->Update();
-				}
-
-				iFrameCycles += iCyclesTaken;
+				Step();
 			}
-
-			m_u32LastFrameCycles = iFrameCycles;
 
 			GTimer()->Update();
 
@@ -330,6 +304,42 @@ void GBEmulator::Update()
 }
 
 //----------------------------------------------------------------------------------------------------
+void GBEmulator::Step()
+{
+	int iFrameCycles	= 0;
+	int iCyclesTaken	= 0;
+
+	// Handle the emulation for this frame
+	while( iFrameCycles < kMaxCyclesPerFrame )
+	{
+		iCyclesTaken = 0;
+		{
+			PROFILE( "Cpu::ExecuteOpcode" );
+
+			// Execute the next opcode
+			iCyclesTaken += m_pCpu->ExecuteOpcode();
+		}
+
+		iCyclesTaken += m_pCpu->HandleInterrupts();
+		{
+			PROFILE( "Gpu::Update" );
+
+			// Update the GPU
+			m_pGpu->Update( iCyclesTaken );
+		}
+
+		iFrameCycles += iCyclesTaken;
+		{
+			PROFILE( "Joypad::Update" );
+			// Update the joypad
+			m_pJoypad->Update();
+		}
+
+	}
+	m_u32LastFrameCycles = iFrameCycles;
+}
+
+//----------------------------------------------------------------------------------------------------
 void GBEmulator::Draw()
 {
 	const uint32*	pu32ScreenData	= m_pGpu->GetScreenData();
@@ -337,15 +347,15 @@ void GBEmulator::Draw()
 	
 	SDL_Rect		dstRect;
 
-	dstRect.w	= ScreenScaleFactor;
-	dstRect.h	= ScreenScaleFactor;
+	dstRect.w	= kScreenScaleFactor;
+	dstRect.h	= kScreenScaleFactor;
 
 	SDL_LockSurface( m_pFrameSurface );
 
 	for( int i = 0; i < k_ScreenDataLen; ++i )
 	{
-		dstRect.x	= ( i % GBScreenWidth ) * ScreenScaleFactor;
-		dstRect.y	= ( i / GBScreenWidth ) * ScreenScaleFactor;
+		dstRect.x	= ( i % GBScreenWidth ) * kScreenScaleFactor;
+		dstRect.y	= ( i / GBScreenWidth ) * kScreenScaleFactor;
 
 		SDL_FillRect( m_pFrameSurface, &dstRect, pu32ScreenData[ i ] );
 	}
@@ -355,7 +365,7 @@ void GBEmulator::Draw()
 	// Note that this speed indicator is not really accurate; it does not take into account actual elapsed frame time
 	//m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f%%", static_cast<float>( m_u32LastFrameCycles ) / 70224.f * 100.f );
 
-	m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
+	m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
 	//m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "0x%x", m_pMem->ReadMemory( 0xFF85 ) );
 	
 	SDL_Flip( m_pFrameSurface );
@@ -401,9 +411,6 @@ void GBEmulator::SimulateInput( SDL_Event *pEvent )
 		case SDLK_RIGHT:
 			button = ButtonRight;
 			break;
-		case SDLK_r:
-			Reset();
-			break;
 	}
 
 	if( ButtonInvalid != button )
@@ -416,5 +423,25 @@ void GBEmulator::SimulateInput( SDL_Event *pEvent )
 		{
 			m_pJoypad->SimulateKeyUp( button );
 		}
+	}
+}
+
+//----------------------------------------------------------------------------------------------------
+void GBEmulator::HandleShortcuts( SDL_Event* pEvent )
+{
+	switch( pEvent->key.keysym.sym )
+	{
+		case SDLK_r:
+			Reset();
+			break;
+		case SDLK_SPACE:
+			m_bDebugPaused = !m_bDebugPaused;
+			break;
+		case SDLK_RIGHT:
+			if( m_bDebugPaused )
+			{
+				Step();
+			}
+			break;
 	}
 }

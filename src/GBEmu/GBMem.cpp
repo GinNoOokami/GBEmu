@@ -119,8 +119,8 @@ void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 				break;
 
 			case MMIOLCDStatus:
-				// Lower 3 bits are read-only
-				m_Memory[ u16Address ] = u8Data & 0xF8;
+				// Lower 3 bits are read-only, msb is unused
+				m_Memory[ u16Address ] = u8Data & 0x78;
 				break;
 
 			case MMIOLCDScanline:

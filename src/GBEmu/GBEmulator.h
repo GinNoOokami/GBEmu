@@ -47,9 +47,11 @@ enum Interrupt
 
 class GBEmulator
 {
+	// Internal constants
 	enum
 	{
-		ScreenScaleFactor = 4
+		kScreenScaleFactor = 4, // TODO: Make this more flexible, such as dynamic based on the window size or provide static scaling options in a menu
+		kMaxCyclesPerFrame = 70224
 	};
 
 public:
@@ -71,10 +73,12 @@ public:
 
 private:
 	void	Update();
+	void	Step();
 	void	Draw();
 
 	void	SimulateInput( SDL_Event* pEvent );
 	void	StopAndUnloadCartridge();
+	void	HandleShortcuts( SDL_Event* oEvent );
 
 private:
 	GBCpu*			m_pCpu;
@@ -88,6 +92,8 @@ private:
 	bool			m_bInitialized;
 	bool			m_bRunning;
 	bool			m_bCartridgeLoaded;
+
+	bool			m_bDebugPaused;
 
 	float			m_fElapsedTime;
 	float			m_fNextFrame;
