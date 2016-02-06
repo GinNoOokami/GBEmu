@@ -254,15 +254,16 @@ void GBGpu::DrawWindow( ubyte u8LCDControl, ubyte u8Scanline )
 	ubyte py				= ( u8Scanline - u8WindowY ) & 7;
 	ubyte px				= 0;
 	uint16 u16DeltaY		= u8Scanline - u8WindowY;
-	uint16 u16TileDataAddr	= GetTileDataSelect( u8LCDControl ) ? TileDataSelect1 : TileDataSelect0;
-	uint16 u16TileMapAddr	= GetWindowTileMapSelect( u8LCDControl ) ? WindowTileMapSelect1 : WindowTileMapSelect0;
-	uint16 u16TileData		= GetMapTileData( u16TileMapAddr, u16TileDataAddr, u8TileX, u8TileY, py );
-	ubyte palette			= 0;
 
 	if(		u8WindowX <= 166
 		&&	u8WindowY <= 143
 		&&	u16DeltaY < 144 )
 	{
+		uint16 u16TileDataAddr	= GetTileDataSelect( u8LCDControl ) ? TileDataSelect1 : TileDataSelect0;
+		uint16 u16TileMapAddr	= GetWindowTileMapSelect( u8LCDControl ) ? WindowTileMapSelect1 : WindowTileMapSelect0;
+		uint16 u16TileData		= GetMapTileData( u16TileMapAddr, u16TileDataAddr, u8TileX, u8TileY, py );
+		ubyte palette			= 0;
+
 		u8WindowX -= 7;
 
 		if( u8WindowX > 166 )

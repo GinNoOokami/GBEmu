@@ -16,7 +16,7 @@
 #include <memory.h>
 
 //====================================================================================================
-// Static intializers
+// Static initializers
 //====================================================================================================
 
 ubyte GBMem::GBBios[ 0x100 ] = 
@@ -116,12 +116,12 @@ void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 
 			case MMIOLCDControl:
 				m_Memory[ u16Address ] = u8Data;
-				break;
+				return;
 
 			case MMIOLCDStatus:
 				// Lower 3 bits are read-only, msb is unused
 				m_Memory[ u16Address ] = u8Data & 0x78;
-				break;
+				return;
 
 			case MMIOLCDScanline:
 				m_Memory[ u16Address ] = 0;
@@ -140,12 +140,12 @@ void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 
 			case MMIODivider:
 				m_Memory[ u16Address ] = 0;
-				break;
+				return;
 
 			// KEY1 register not supported by DMG, always read default speed
 			case MMIOKey1:
 				m_Memory[ u16Address ] = 0;
-				break;
+				return;
 		}
 	}
 

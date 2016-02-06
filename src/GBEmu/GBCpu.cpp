@@ -31,6 +31,8 @@ const uint32 GBCpu::CLOCK_SPEED = 4194304;
 GBCpu::GBCpu( GBMem* pMemoryModule, GBTimer* pTimer ) :
 	m_pMem( pMemoryModule ),
 	m_pTimer( pTimer ),
+	m_PC( 0 ),
+	m_SP( 0 ),
 	m_bInitialized( false ),
 	m_bHalt( false ),
 	m_bStop( false ),
@@ -650,7 +652,7 @@ void GBCpu::Reset()
 		m_u16History[ i ] = state;
 	}
 
-	m_DebugPC = 0x0098;
+	m_DebugPC = 0x60a7;
 	m_bInit = false;
 }
 
@@ -681,27 +683,26 @@ int GBCpu::ExecuteOpcode()
 
 	if( IsRunning() )
 	{
-		if( m_PC > 0 && m_PC == m_DebugPC && ( m_PC >= 0x100 || !m_pMem->IsBootRomEnabled() ) )
+#ifdef _DEBUG
+		if( !m_pMem->IsBootRomEnabled() )
 		{
-			int a = 0;
-			m_bInit = true;
-		}
+			if( m_PC > 0 && m_PC == m_DebugPC )
+			{
+				m_bInit = true;
+			}
 
+			if( m_bInit )
+			{
+				CpuState state( this );
+				m_u16History[ m_u32HistoryIndex++ ] = state;
+				if( m_u32HistoryIndex >= DebugHistorySize )
+				{
+					m_u32HistoryIndex = 0;
+				}
+			}
+		}
+#endif
 		SetPC( m_PC );
-
-		CpuState state( this );
-		m_u16History[ m_u32HistoryIndex++ ] = state;
-		if( m_u32HistoryIndex >= DebugHistorySize )
-		{
-			m_u32HistoryIndex = 0;
-		}
-
-		/*
-		if( m_PC == 0x023b && !m_bInit )
-		{
-			m_bInit = true;
-		}
-		*/
 
 		// Grab the current opcode
  		opcode		= ReadMemory( m_PC++ );
@@ -829,15 +830,17 @@ void GBCpu::SimulateIO( ubyte u8Clocks )
 void GBCpu::DebugDumpHistory()
 {
 	CpuState* state;
+	Log()->BeginBatchWrite();
 	for( int i = 0; i < DebugHistorySize; ++i )
 	{
 		state = &m_u16History[ m_u32HistoryIndex++ ];
-		Log()->Write( LOG_COLOR_WHITE, "PC=0x%04x AF=0x%04x BC=0x%04x DE=0x%04x HL=0x%04x SP=0x%04x ", state->PC, state->AF, state->BC, state->DE, state->HL, state->SP );
+		Log()->BatchWrite( LOG_COLOR_WHITE, "PC=0x%04x AF=0x%04x BC=0x%04x DE=0x%04x HL=0x%04x SP=0x%04x ", state->PC, state->AF, state->BC, state->DE, state->HL, state->SP );
 		if( m_u32HistoryIndex >= DebugHistorySize )
 		{
 			m_u32HistoryIndex = 0;
 		}
 	}
+	Log()->EndBatchWrite();
 }
 
 //----------------------------------------------------------------------------------------------------

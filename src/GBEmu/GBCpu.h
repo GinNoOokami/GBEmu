@@ -58,7 +58,7 @@ class GBCpu
 
 	enum
 	{
-		DebugHistorySize	= 0x3000
+		DebugHistorySize	= 0x10000
 	};
 
 public:

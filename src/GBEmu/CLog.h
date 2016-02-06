@@ -48,6 +48,11 @@ public:
 	// Write to log
 	void Write( const char* pColor, const char* pMessage, ... );
 
+	// Batch log functions
+	void BeginBatchWrite();
+	void EndBatchWrite();
+	void BatchWrite( const char* pColor, const char* pMessage, ... );
+
 protected:
     // Protected constructor for singleton
 	CLog( void );
@@ -56,6 +61,8 @@ private:
     static CLog* s_Instance;    // Static instance for singleton
 
 	char* m_pFilename;          // Name of log file
+
+	FILE* m_pFile;
 
     bool m_Initialized;         // Init flag
 };
