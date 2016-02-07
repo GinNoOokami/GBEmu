@@ -19,17 +19,17 @@
 
 class GBCpuUnitTest
 {
-	friend class GBCpu;
-	
+    friend class GBCpu;
+    
 public:
     // Constructor / destructor
     GBCpuUnitTest();
     ~GBCpuUnitTest();
 
-	void	ExecuteTests();
+    void    ExecuteTests();
 
 private:
-	void	TestOpLD_r_n();
+    void    TestOpLD_r_n();
 };
 
 #endif

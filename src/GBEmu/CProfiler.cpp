@@ -16,7 +16,7 @@
 //====================================================================================================
 
 CProfiler::CProfiler( const char* pProfileId ) :
-	m_ProfileId( pProfileId ),
+    m_ProfileId( pProfileId ),
     m_Initialized( false ),
     m_Profiling( false ),
     m_AccumulatedTime( 0.0f ),

@@ -2,7 +2,7 @@
 // Filename:    CProfileManager.h
 // Created by:  Jeff Padgham
 // Description: A real time profiling system that keeps track of multiple profiles via a hashmap. Just
-//				use the macro PROFILE( tagname ) at the beginning of the code block you wish to profile.
+//                use the macro PROFILE( tagname ) at the beginning of the code block you wish to profile.
 //====================================================================================================
 
 //====================================================================================================
@@ -103,31 +103,31 @@ void CProfileManager::StopProfile( const char* pProfileId )
 void CProfileManager::DisplayProfiles( void )
 {
     ProfileMapIter iter;
-	
-	std::vector< CProfiler* > profileList;
-	std::vector< CProfiler* >::iterator itr;
+    
+    std::vector< CProfiler* > profileList;
+    std::vector< CProfiler* >::iterator itr;
 
-	// Push all of the entries into a vector to be sorted
+    // Push all of the entries into a vector to be sorted
     for( iter = m_Profiles.begin(); iter != m_Profiles.end(); ++iter )
     {
-		profileList.push_back( (*iter).second );
+        profileList.push_back( (*iter).second );
     }
 
-	// Sort the entries
-	std::sort( profileList.begin(), profileList.end(), SortProfiles );
-	
-	// Display the entries
+    // Sort the entries
+    std::sort( profileList.begin(), profileList.end(), SortProfiles );
+    
+    // Display the entries
     for( itr = profileList.begin(); itr != profileList.end(); ++itr )
     {
         CProfiler* pProfiler = *itr;
         if( NULL != pProfiler )
         {
             Log()->Write( LOG_COLOR_WHITE, "\"%s\"\t-\tAverage: %fms\tShortest: %fms\tLongest: %fms\tCount: %d", 
-						  pProfiler->GetProfileId().c_str(), 
-						  pProfiler->GetAverageTime(), 
-						  pProfiler->GetShortestTime(),
-						  pProfiler->GetLongestTime(), 
-						  pProfiler->GetCount() );
+                          pProfiler->GetProfileId().c_str(), 
+                          pProfiler->GetAverageTime(), 
+                          pProfiler->GetShortestTime(),
+                          pProfiler->GetLongestTime(), 
+                          pProfiler->GetCount() );
         }
     }
 }
@@ -152,5 +152,5 @@ void CProfileManager::Cleanup( void )
 
 int SortProfiles( CProfiler* a, CProfiler* b )
 {
-	return a->GetAverageTime() * a->GetCount() > b->GetAverageTime() * b->GetCount();
+    return a->GetAverageTime() * a->GetCount() > b->GetAverageTime() * b->GetCount();
 }

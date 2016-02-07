@@ -5,15 +5,15 @@
 
 int main( int argc, char* argv[] )
 {
-	Log()->Initialize();
+    Log()->Initialize();
 
-	GBEmulator oEmulator;
+    GBEmulator oEmulator;
 
-	oEmulator.Initialize();
-	oEmulator.Run();
-	oEmulator.Terminate();
+    oEmulator.Initialize();
+    oEmulator.Run();
+    oEmulator.Terminate();
 
-	Log()->Terminate();
+    Log()->Terminate();
 
-	return 0;
+    return 0;
 }

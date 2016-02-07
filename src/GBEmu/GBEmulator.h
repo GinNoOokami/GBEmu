@@ -5,7 +5,7 @@
 // Filename:    GBEmulator.h
 // Created by:  Jeff Padgham
 // Description: The main Game Boy emulator component. This class ties all of the modules together and
-//				acts like the system board.
+//              acts like the system board.
 //====================================================================================================
 
 //====================================================================================================
@@ -34,11 +34,11 @@ union SDL_Event;
 //====================================================================================================
 enum Interrupt
 {
-	VBlank		= 1 << 0,
-	LCDStatus	= 1 << 1,
-	Timer		= 1 << 2,
-	Serial		= 1 << 3,
-	Input		= 1 << 4
+    VBlank      = 1 << 0,
+    LCDStatus   = 1 << 1,
+    Timer       = 1 << 2,
+    Serial      = 1 << 3,
+    Input       = 1 << 4
 };
 
 //====================================================================================================
@@ -47,61 +47,61 @@ enum Interrupt
 
 class GBEmulator
 {
-	// Internal constants
-	enum
-	{
-		kScreenScaleFactor = 4, // TODO: Make this more flexible, such as dynamic based on the window size or provide static scaling options in a menu
-		kMaxCyclesPerFrame = 70224
-	};
+    // Internal constants
+    enum
+    {
+        kScreenScaleFactor = 4, // TODO: Make this more flexible, such as dynamic based on the window size or provide static scaling options in a menu
+        kMaxCyclesPerFrame = 70224
+    };
 
 public:
-	typedef void (GBEmulator::*GBInterruptHandler)( Interrupt interrupt );
+    typedef void (GBEmulator::*GBInterruptHandler)( Interrupt interrupt );
 
 public:
     // Constructor / destructor
     GBEmulator();
     ~GBEmulator();
 
-	void	Initialize();
-	void	Terminate();
+    void    Initialize();
+    void    Terminate();
 
-	void	Run();
-	void	Reset();
+    void    Run();
+    void    Reset();
 
-	void	LoadCartridge( const char* szFilepath );
-	void	RaiseInterrupt( Interrupt interrupt );
-
-private:
-	void	Update();
-	void	Step();
-	void	Draw();
-
-	void	SimulateInput( SDL_Event* pEvent );
-	void	StopAndUnloadCartridge();
-	void	HandleShortcuts( SDL_Event* oEvent );
+    void    LoadCartridge( const char* szFilepath );
+    void    RaiseInterrupt( Interrupt interrupt );
 
 private:
-	GBCpu*			m_pCpu;
-	GBMem*			m_pMem;
-	GBGpu*			m_pGpu;
-	GBTimer*		m_pTimer;
-	GBJoypad*		m_pJoypad;
+    void    Update();
+    void    Step();
+    void    Draw();
 
-	GBCartridge*	m_pCartridge;
+    void    SimulateInput( SDL_Event* pEvent );
+    void    StopAndUnloadCartridge();
+    void    HandleShortcuts( SDL_Event* oEvent );
 
-	bool			m_bInitialized;
-	bool			m_bRunning;
-	bool			m_bCartridgeLoaded;
+private:
+    GBCpu*          m_pCpu;
+    GBMem*          m_pMem;
+    GBGpu*          m_pGpu;
+    GBTimer*        m_pTimer;
+    GBJoypad*       m_pJoypad;
 
-	bool			m_bDebugPaused;
+    GBCartridge*    m_pCartridge;
 
-	float			m_fElapsedTime;
-	float			m_fNextFrame;
-	uint32			m_u32LastFrameCycles;
+    bool            m_bInitialized;
+    bool            m_bRunning;
+    bool            m_bCartridgeLoaded;
 
-	SDL_Surface*	m_pFrameSurface;
+    bool            m_bDebugPaused;
 
-	NFont*			m_pFpsText;
+    float           m_fElapsedTime;
+    float           m_fNextFrame;
+    uint32          m_u32LastFrameCycles;
+
+    SDL_Surface*    m_pFrameSurface;
+
+    NFont*          m_pFpsText;
 
 };
 

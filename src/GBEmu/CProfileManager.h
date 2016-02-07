@@ -5,7 +5,7 @@
 // Filename:    CProfileManager.h
 // Created by:  Jeff Padgham
 // Description: A real time profiling system that keeps track of multiple profiles via a hashmap. Just
-//				use the macro PROFILE( tagname ) at the beginning of the code block you wish to profile.
+//                use the macro PROFILE( tagname ) at the beginning of the code block you wish to profile.
 //====================================================================================================
 
 //====================================================================================================
@@ -73,7 +73,7 @@ static CProfileManager* Profiler( void )
     return CProfileManager::Get();
 }
 
-int	SortProfiles( CProfiler* a, CProfiler* b );
+int    SortProfiles( CProfiler* a, CProfiler* b );
 
 #ifndef NOPROFILE
 #define PROFILE( name ) CAutoProfile profile( ( const char* )( name ) )

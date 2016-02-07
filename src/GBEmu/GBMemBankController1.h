@@ -22,31 +22,31 @@
 class GBMemBankController1 : public IGBMemBankController
 {
 public:
-	GBMemBankController1( ubyte* pRomBank, ubyte* pRamBank );
-	~GBMemBankController1();
+    GBMemBankController1( ubyte* pRomBank, ubyte* pRamBank );
+    ~GBMemBankController1();
 
-	ubyte			ReadRomBank( uint16 u16Address );
-	ubyte			ReadRamBank( uint16 u16Address );
-	void			WriteMemory( uint16 u16Address, ubyte u8Data );
+    ubyte           ReadRomBank( uint16 u16Address );
+    ubyte           ReadRamBank( uint16 u16Address );
+    void            WriteMemory( uint16 u16Address, ubyte u8Data );
 
-	bool			IsRamEnabled() const;
-	bool			IsRamDirty() const				{ return m_bRamDirty;		}
-	inline void		SetRamDirty( bool bFlag )		{ m_bRamDirty = bFlag;		}
+    bool            IsRamEnabled() const;
+    bool            IsRamDirty() const              { return m_bRamDirty;   }
+    inline void     SetRamDirty( bool bFlag )       { m_bRamDirty = bFlag;  }
 
 private:
-	void			UpdateBankValues();
+    void            UpdateBankValues();
 
-	ubyte*			m_pRomBank;
-	ubyte*			m_pRamBank;
+    ubyte*          m_pRomBank;
+    ubyte*          m_pRamBank;
 
-	ubyte			m_u8BankSelect0;
-	ubyte			m_u8BankSelect1;
+    ubyte           m_u8BankSelect0;
+    ubyte           m_u8BankSelect1;
 
-	bool			m_bRamEnabled;
-	bool			m_bRamBankMode;
-	bool			m_bRamDirty;
-	ubyte			m_u8SelectedRomBank;
-	ubyte			m_u8SelectedRamBank;
+    bool            m_bRamEnabled;
+    bool            m_bRamBankMode;
+    bool            m_bRamDirty;
+    ubyte           m_u8SelectedRomBank;
+    ubyte           m_u8SelectedRamBank;
 };
 
 #endif

@@ -22,10 +22,10 @@ class CProfiler
 {
 public:
     // Constructor / destructor
-	CProfiler( const char* pProfileId );
+    CProfiler( const char* pProfileId );
     ~CProfiler( void );
 
-	inline std::string GetProfileId() const		{ return m_ProfileId;	}
+    inline std::string GetProfileId() const        { return m_ProfileId;    }
 
     // Functions to start and stop the profiler around suspicious code
     void StartProfile( void );
@@ -44,7 +44,7 @@ public:
 
     int             m_Count;
 private:
-	std::string		m_ProfileId;
+    std::string        m_ProfileId;
     bool            m_Initialized;
     bool            m_Profiling;
     LARGE_INTEGER   m_TicksPerSecond;

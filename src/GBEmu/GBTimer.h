@@ -26,35 +26,35 @@ class GBMem;
 
 class GBTimer
 {
-	// Class enums
-	enum Frequency
-	{
-		Freq4096Hz,
-		Freq262144Hz,
-		Freq65536Hz,
-		Freq16384Hz
-	};
+    // Class enums
+    enum Frequency
+    {
+        Freq4096Hz,
+        Freq262144Hz,
+        Freq65536Hz,
+        Freq16384Hz
+    };
 
 public:
     // Constructor / destructor
-	GBTimer( GBEmulator* pEmulator, GBMem* pMemoryModule );
+    GBTimer( GBEmulator* pEmulator, GBMem* pMemoryModule );
     ~GBTimer( void );
 
-	void			Reset();
+    void            Reset();
 
-	void			Update( uint32 u32ElapsedClockCycles );
-	inline	uint32	GetTotalCycles()								{ return m_u32TimerCycles;					}
-
-private:
-	inline bool		IsTimerEnabled( ubyte u8TimerControl ) const	{ return 0 != ( u8TimerControl & 0x04 );	}
-	inline ubyte	GetTimerMode( ubyte u8TimerControl ) const		{ return u8TimerControl & 0x03;				}
+    void            Update( uint32 u32ElapsedClockCycles );
+    inline uint32   GetTotalCycles()                                { return m_u32TimerCycles;                  }
 
 private:
-	GBEmulator*		m_pEmulator;
-	GBMem*			m_pMem;
+    inline bool     IsTimerEnabled( ubyte u8TimerControl ) const    { return 0 != ( u8TimerControl & 0x04 );    }
+    inline ubyte    GetTimerMode( ubyte u8TimerControl ) const      { return u8TimerControl & 0x03;             }
 
-	uint32			m_u32TimerCycles;
-	uint32			m_u32TimerDiv;
+private:
+    GBEmulator*     m_pEmulator;
+    GBMem*          m_pMem;
+
+    uint32          m_u32TimerCycles;
+    uint32          m_u32TimerDiv;
 };
 
 #endif

@@ -26,15 +26,15 @@ class GBMem;
 
 enum JoypadButton
 {
-	ButtonInvalid	= 0,
-	ButtonA			= 1 << 0,
-	ButtonB			= 1 << 1,
-	ButtonSelect	= 1 << 2,
-	ButtonStart		= 1 << 3,
-	ButtonRight		= 1 << 4,
-	ButtonLeft		= 1 << 5,
-	ButtonUp		= 1 << 6,
-	ButtonDown		= 1 << 7
+    ButtonInvalid   = 0,
+    ButtonA         = 1 << 0,
+    ButtonB         = 1 << 1,
+    ButtonSelect    = 1 << 2,
+    ButtonStart     = 1 << 3,
+    ButtonRight     = 1 << 4,
+    ButtonLeft      = 1 << 5,
+    ButtonUp        = 1 << 6,
+    ButtonDown      = 1 << 7
 };
 
 //====================================================================================================
@@ -44,20 +44,20 @@ enum JoypadButton
 class GBJoypad
 {
 public:
-	GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule );
-	~GBJoypad();
+    GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule );
+    ~GBJoypad();
 
-	void			Reset();
+    void            Reset();
 
-	void			Update();
-	void			SimulateKeyDown( JoypadButton button );
-	void			SimulateKeyUp( JoypadButton button );
+    void            Update();
+    void            SimulateKeyDown( JoypadButton button );
+    void            SimulateKeyUp( JoypadButton button );
 
 private:
-	GBEmulator*		m_pEmulator;
-	GBMem*			m_pMem;
+    GBEmulator*     m_pEmulator;
+    GBMem*          m_pMem;
 
-	uint32			m_u32KeyStatus;
+    uint32          m_u32KeyStatus;
 };
 
 #endif

@@ -22,19 +22,19 @@
 class GBMemBankController0 : public IGBMemBankController
 {
 public:
-	GBMemBankController0( ubyte* pRomBank );
-	~GBMemBankController0();
+    GBMemBankController0( ubyte* pRomBank );
+    ~GBMemBankController0();
 
-	ubyte			ReadRomBank( uint16 u16Address );
-	ubyte			ReadRamBank( uint16 u16Address );
-	void			WriteMemory( uint16 u16Address, ubyte u8Data );
+    ubyte           ReadRomBank( uint16 u16Address );
+    ubyte           ReadRamBank( uint16 u16Address );
+    void            WriteMemory( uint16 u16Address, ubyte u8Data );
 
-	bool			IsRamEnabled() const			{ return false;		}
-	bool			IsRamDirty() const				{ return false;		}
-	void			SetRamDirty( bool bFlag )		{}
+    bool            IsRamEnabled() const            { return false;        }
+    bool            IsRamDirty() const              { return false;        }
+    void            SetRamDirty( bool bFlag )       {}
 
 private:
-	ubyte*			m_pRomBank;
+    ubyte*          m_pRomBank;
 };
 
 #endif
