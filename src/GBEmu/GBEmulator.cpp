@@ -30,7 +30,7 @@
 
 // Disable warnings in external library
 #pragma warning( disable:4996 )
-//#include "NFont.h"
+#include "NFont.h"
 #pragma warning( default:4996 )
 
 // TODO: Store these is a home/user directory, and ideally make it a user config
@@ -53,7 +53,7 @@ GBEmulator::GBEmulator() :
     m_fNextFrame( 0 ),
     m_fElapsedTime( 0 ),
     m_u32LastFrameCycles( 0 ),
-    //    m_pFpsText( NULL ),
+    m_pFpsText( NULL ),
     m_pWindow( NULL ),
     m_pRenderer( NULL )
 {
@@ -68,16 +68,17 @@ GBEmulator::~GBEmulator()
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::Initialize()
 {
-    int iDesiredWidth    = GBScreenWidth * kScreenScaleFactor;
-    int iDesiredHeight   = GBScreenHeight * kScreenScaleFactor;
-
     if( -1 == SDL_Init( SDL_INIT_EVERYTHING ) )
     {
         fprintf( stderr, "Failed to initialize SDL!\n" );
         exit( 1 );
     }
 
-    if( -1 == SDL_CreateWindowAndRenderer( iDesiredWidth, iDesiredHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &m_pWindow, &m_pRenderer ) )
+    if( -1 == SDL_CreateWindowAndRenderer(  GBScreenWidth * kScreenScaleFactor, 
+                                            GBScreenHeight * kScreenScaleFactor, 
+                                            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, 
+                                            &m_pWindow, 
+                                            &m_pRenderer ) )
     {
         fprintf( stderr, "Failed to initialize window!\n" );
         exit( 1 );
@@ -92,7 +93,8 @@ void GBEmulator::Initialize()
     m_pTexture = SDL_CreateTexture( m_pRenderer,
                                     SDL_PIXELFORMAT_ARGB8888,
                                     SDL_TEXTUREACCESS_STREAMING,
-                                    GBScreenWidth, GBScreenHeight );
+                                    GBScreenWidth, 
+                                    GBScreenHeight );
 
     // Make sure our battery directory exists
     if( 0 != _access( GB_BATTERY_DIRECTORY, 0 ) )
@@ -108,6 +110,8 @@ void GBEmulator::Initialize()
 
     m_pCartridge    = new GBCartridge( m_pMem );
 
+    m_pCpu->Initialize();
+
     TTF_Init();
 
     TTF_Font* pFont = TTF_OpenFont( "assets\\Charybdis.ttf", 24 );
@@ -119,12 +123,10 @@ void GBEmulator::Initialize()
 
         pFont = TTF_OpenFont( szBuffer, 14 );
     }
-    //m_pFpsText = new NFont;
-    //m_pFpsText->load( pFont, NFont::Color::Color() );
+    m_pFpsText = new NFont;
+    m_pFpsText->load( m_pRenderer, pFont, NFont::Color::Color() );
 
     GTimer()->Initialize();
-
-    m_pCpu->Initialize();
 
     m_bInitialized = true;
 
@@ -158,7 +160,6 @@ void GBEmulator::Terminate()
 
         if( NULL != m_pCpu )
         {
-            m_pCpu->Terminate();
             delete m_pCpu;
             m_pCpu = NULL;
         }
@@ -173,6 +174,12 @@ void GBEmulator::Terminate()
         {
             delete m_pMem;
             m_pMem = NULL;
+        }
+
+        if( NULL != m_pFpsText )
+        {
+            delete m_pFpsText;
+            m_pFpsText = NULL;
         }
 
         TTF_Quit();
@@ -359,7 +366,6 @@ void GBEmulator::Step()
 void GBEmulator::Draw()
 {
     const uint32* pu32ScreenData     = m_pGpu->GetScreenData();
-    const int     k_ScreenDataLen    = GBScreenWidth * GBScreenHeight;
 
     SDL_RenderClear( m_pRenderer );
     SDL_UpdateTexture( m_pTexture, NULL, pu32ScreenData, GBScreenWidth * sizeof( uint32 ) );
@@ -368,7 +374,7 @@ void GBEmulator::Draw()
     // Note that this speed indicator is not really accurate; it does not take into account actual elapsed frame time
     //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f%%", static_cast<float>( m_u32LastFrameCycles ) / 70224.f * 100.f );
 
-    //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
+    m_pFpsText->draw( m_pRenderer, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
     //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "0x%x", m_pMem->ReadMemory( 0xFF85 ) );
     
     SDL_RenderPresent( m_pRenderer );

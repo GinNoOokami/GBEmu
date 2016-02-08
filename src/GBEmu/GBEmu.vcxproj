@@ -98,6 +98,9 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\lib\NFont\NFont.h" />
+    <ClInclude Include="..\lib\NFont\NFont_gpu.h" />
+    <ClInclude Include="..\lib\NFont\SDL_FontCache.h" />
     <ClInclude Include="CLog.h" />
     <ClInclude Include="CProfileManager.h" />
     <ClInclude Include="CProfiler.h" />
@@ -118,6 +121,8 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     <ClInclude Include="IGBMemBankController.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\lib\NFont\NFont.cpp" />
+    <ClCompile Include="..\lib\NFont\SDL_FontCache.c" />
     <ClCompile Include="CLog.cpp" />
     <ClCompile Include="CProfileManager.cpp" />
     <ClCompile Include="CProfiler.cpp" />

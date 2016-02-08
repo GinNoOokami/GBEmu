@@ -16,6 +16,9 @@
     <Filter Include="Util">
       <UniqueIdentifier>{0e3f5756-2219-4cb8-b02b-a5ad26ac77a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NFont">
+      <UniqueIdentifier>{baf18058-cd53-46c6-bf6f-88a4ca57302b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emutypes.h">
@@ -72,6 +75,15 @@
     <ClInclude Include="CTimer.h">
       <Filter>Util</Filter>
     </ClInclude>
+    <ClInclude Include="..\lib\NFont\NFont.h">
+      <Filter>NFont</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\NFont\NFont_gpu.h">
+      <Filter>NFont</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\NFont\SDL_FontCache.h">
+      <Filter>NFont</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GBEmulator.cpp">
@@ -122,6 +134,12 @@
     </ClCompile>
     <ClCompile Include="CTimer.cpp">
       <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\NFont\NFont.cpp">
+      <Filter>NFont</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\NFont\SDL_FontCache.c">
+      <Filter>NFont</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -25,7 +25,7 @@ class GBTimer;
 class GBJoypad;
 class GBCartridge;
 
-//class NFont;
+class NFont;
 struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Texture;
@@ -105,7 +105,7 @@ private:
     SDL_Renderer*   m_pRenderer;
     SDL_Texture*    m_pTexture;
 
-    //NFont*          m_pFpsText;
+    NFont*          m_pFpsText;
 
 };
 
