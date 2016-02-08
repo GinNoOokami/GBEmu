@@ -25,8 +25,10 @@ class GBTimer;
 class GBJoypad;
 class GBCartridge;
 
-class NFont;
-struct SDL_Surface;
+//class NFont;
+struct SDL_Window;
+struct SDL_Renderer;
+struct SDL_Texture;
 union SDL_Event;
 
 //====================================================================================================
@@ -99,9 +101,11 @@ private:
     float           m_fNextFrame;
     uint32          m_u32LastFrameCycles;
 
-    SDL_Surface*    m_pFrameSurface;
+    SDL_Window*     m_pWindow;
+    SDL_Renderer*   m_pRenderer;
+    SDL_Texture*    m_pTexture;
 
-    NFont*          m_pFpsText;
+    //NFont*          m_pFpsText;
 
 };
 

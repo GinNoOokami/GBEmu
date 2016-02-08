@@ -16,9 +16,6 @@
     <Filter Include="Util">
       <UniqueIdentifier>{0e3f5756-2219-4cb8-b02b-a5ad26ac77a7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NFont">
-      <UniqueIdentifier>{d11a4f94-ec5f-4a3a-9fc1-cc505b9beae6}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="emutypes.h">
@@ -125,9 +122,6 @@
     </ClCompile>
     <ClCompile Include="CTimer.cpp">
       <Filter>Util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\lib\NFont\NFont.cpp">
-      <Filter>NFont</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

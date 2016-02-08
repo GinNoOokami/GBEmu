@@ -30,7 +30,7 @@
 
 // Disable warnings in external library
 #pragma warning( disable:4996 )
-#include "NFont.h"
+//#include "NFont.h"
 #pragma warning( default:4996 )
 
 // TODO: Store these is a home/user directory, and ideally make it a user config
@@ -53,8 +53,9 @@ GBEmulator::GBEmulator() :
     m_fNextFrame( 0 ),
     m_fElapsedTime( 0 ),
     m_u32LastFrameCycles( 0 ),
-    m_pFrameSurface( NULL ),
-    m_pFpsText( NULL )
+    //    m_pFpsText( NULL ),
+    m_pWindow( NULL ),
+    m_pRenderer( NULL )
 {
 }
 
@@ -67,23 +68,37 @@ GBEmulator::~GBEmulator()
 //----------------------------------------------------------------------------------------------------
 void GBEmulator::Initialize()
 {
+    int iDesiredWidth    = GBScreenWidth * kScreenScaleFactor;
+    int iDesiredHeight   = GBScreenHeight * kScreenScaleFactor;
+
     if( -1 == SDL_Init( SDL_INIT_EVERYTHING ) )
     {
         fprintf( stderr, "Failed to initialize SDL!\n" );
         exit( 1 );
     }
 
-    TTF_Init();
+    if( -1 == SDL_CreateWindowAndRenderer( iDesiredWidth, iDesiredHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE, &m_pWindow, &m_pRenderer ) )
+    {
+        fprintf( stderr, "Failed to initialize window!\n" );
+        exit( 1 );
+    }
 
-    SDL_WM_SetCaption( "Gameboy Emulator", NULL );
+    SDL_SetWindowTitle( m_pWindow, "Gameboy Emulator" );
+
+    // Clear color is white
+    SDL_SetRenderDrawColor( m_pRenderer, 255, 255, 255, 255 );
+
+    // Create main display surface
+    m_pTexture = SDL_CreateTexture( m_pRenderer,
+                                    SDL_PIXELFORMAT_ARGB8888,
+                                    SDL_TEXTUREACCESS_STREAMING,
+                                    GBScreenWidth, GBScreenHeight );
 
     // Make sure our battery directory exists
     if( 0 != _access( GB_BATTERY_DIRECTORY, 0 ) )
     {
         _mkdir( GB_BATTERY_DIRECTORY );
     }
-
-    m_pFrameSurface = SDL_SetVideoMode( GBScreenWidth * kScreenScaleFactor, GBScreenHeight * kScreenScaleFactor, 32, SDL_ANYFORMAT | SDL_DOUBLEBUF );
 
     m_pMem          = new GBMem;
     m_pTimer        = new GBTimer( this, m_pMem );
@@ -92,7 +107,9 @@ void GBEmulator::Initialize()
     m_pJoypad       = new GBJoypad( this, m_pMem );
 
     m_pCartridge    = new GBCartridge( m_pMem );
-    
+
+    TTF_Init();
+
     TTF_Font* pFont = TTF_OpenFont( "assets\\Charybdis.ttf", 24 );
     if( NULL == pFont )
     {
@@ -102,8 +119,8 @@ void GBEmulator::Initialize()
 
         pFont = TTF_OpenFont( szBuffer, 14 );
     }
-    m_pFpsText = new NFont;
-    m_pFpsText->load( pFont, NFont::Color::Color() );
+    //m_pFpsText = new NFont;
+    //m_pFpsText->load( pFont, NFont::Color::Color() );
 
     GTimer()->Initialize();
 
@@ -343,31 +360,18 @@ void GBEmulator::Draw()
 {
     const uint32* pu32ScreenData     = m_pGpu->GetScreenData();
     const int     k_ScreenDataLen    = GBScreenWidth * GBScreenHeight;
-    
-    SDL_Rect dstRect;
 
-    dstRect.w    = kScreenScaleFactor;
-    dstRect.h    = kScreenScaleFactor;
-
-    SDL_LockSurface( m_pFrameSurface );
-
-    for( int i = 0; i < k_ScreenDataLen; ++i )
-    {
-        dstRect.x    = ( i % GBScreenWidth ) * kScreenScaleFactor;
-        dstRect.y    = ( i / GBScreenWidth ) * kScreenScaleFactor;
-
-        SDL_FillRect( m_pFrameSurface, &dstRect, pu32ScreenData[ i ] );
-    }
-
-    SDL_UnlockSurface( m_pFrameSurface );
+    SDL_RenderClear( m_pRenderer );
+    SDL_UpdateTexture( m_pTexture, NULL, pu32ScreenData, GBScreenWidth * sizeof( uint32 ) );
+    SDL_RenderCopy( m_pRenderer, m_pTexture, NULL, NULL );
 
     // Note that this speed indicator is not really accurate; it does not take into account actual elapsed frame time
     //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f%%", static_cast<float>( m_u32LastFrameCycles ) / 70224.f * 100.f );
 
-    m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
+    //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
     //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "0x%x", m_pMem->ReadMemory( 0xFF85 ) );
     
-    SDL_Flip( m_pFrameSurface );
+    SDL_RenderPresent( m_pRenderer );
 }
 
 //----------------------------------------------------------------------------------------------------

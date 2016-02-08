@@ -42,8 +42,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>../lib/SDL-1.2.15/include;../lib/SDL_ttf-2.0.11\include;../lib/NFont;$(IncludePath)</IncludePath>
-    <LibraryPath>../lib/SDL-1.2.15\lib\x86;../lib\SDL_ttf-2.0.11\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>../lib/SDL2-2.0.4/include;../lib/SDL2_ttf-2.0.14\include;../lib/NFont;$(IncludePath)</IncludePath>
+    <LibraryPath>../lib/SDL2-2.0.4\lib\x86;../lib\SDL2_ttf-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)\bin\</OutDir>
@@ -54,7 +54,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>../NFont;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -62,14 +62,14 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y ..\lib\SDL-1.2.15\lib\x86\SDL.dll $(OutDir)
-xcopy /y ..\lib\SDL_ttf-2.0.11\lib\x86\SDL_ttf.dll $(OutDir)
-xcopy /y ..\lib\SDL_ttf-2.0.11\lib\x86\libfreetype-6.dll $(OutDir)
+      <Command>xcopy /y ..\lib\SDL2-2.0.4\lib\x86\SDL2.dll $(OutDir)
+xcopy /y ..\lib\SDL2_ttf-2.0.14\lib\x86\SDL2_ttf.dll $(OutDir)
+xcopy /y ..\lib\SDL2_ttf-2.0.14\lib\x86\libfreetype-6.dll $(OutDir)
 xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
@@ -118,7 +118,6 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     <ClInclude Include="IGBMemBankController.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\lib\NFont\NFont.cpp" />
     <ClCompile Include="CLog.cpp" />
     <ClCompile Include="CProfileManager.cpp" />
     <ClCompile Include="CProfiler.cpp" />
