@@ -237,6 +237,12 @@ void GBEmulator::Run()
                 case SDL_KEYUP:
                     SimulateInput( &oEvent );
                     break;
+
+                case SDL_DROPFILE:
+                    LoadCartridge( oEvent.drop.file );
+                    SDL_free( oEvent.drop.file );
+                    break;
+
                 case SDL_QUIT:
                     m_bRunning = false;
                     break;
@@ -273,6 +279,13 @@ void GBEmulator::LoadCartridge( const char* szFilepath )
     if( m_pCartridge->LoadFromFile( szFilepath, GB_BATTERY_DIRECTORY ) )
     {
         m_bCartridgeLoaded = true;
+    }
+    else
+    {
+        SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "Error loading ROM", "Unable to load the selected ROM.", m_pWindow );
+
+        // Draw once to refresh the screen
+        Draw();
     }
 }
 
@@ -368,8 +381,12 @@ void GBEmulator::Draw()
     const uint32* pu32ScreenData     = m_pGpu->GetScreenData();
 
     SDL_RenderClear( m_pRenderer );
-    SDL_UpdateTexture( m_pTexture, NULL, pu32ScreenData, GBScreenWidth * sizeof( uint32 ) );
-    SDL_RenderCopy( m_pRenderer, m_pTexture, NULL, NULL );
+
+    if( m_bRunning && m_bCartridgeLoaded )
+    {
+        SDL_UpdateTexture( m_pTexture, NULL, pu32ScreenData, GBScreenWidth * sizeof( uint32 ) );
+        SDL_RenderCopy( m_pRenderer, m_pTexture, NULL, NULL );
+    }
 
     // Note that this speed indicator is not really accurate; it does not take into account actual elapsed frame time
     //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f%%", static_cast<float>( m_u32LastFrameCycles ) / 70224.f * 100.f );
