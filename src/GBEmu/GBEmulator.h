@@ -53,7 +53,7 @@ class GBEmulator
     enum
     {
         kScreenScaleFactor = 4, // TODO: Make this more flexible, such as dynamic based on the window size or provide static scaling options in a menu
-        kMaxCyclesPerFrame = 70224
+        kMaxCyclesPerFrame = 70224 // 154 scanlines (including vblank) * 456 clock cycles per line (see lcd timing docs)
     };
 
 public:
