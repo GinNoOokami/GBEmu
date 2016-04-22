@@ -140,47 +140,26 @@ void GBEmulator::Terminate()
     {
         StopAndUnloadCartridge();
 
-        if( NULL != m_pCartridge )
-        {
-            delete m_pCartridge;
-            m_pCartridge = NULL;
-        }
+        delete m_pCartridge;
+        m_pCartridge = NULL;
 
-        if( NULL != m_pJoypad )
-        {
-            delete m_pJoypad;
-            m_pJoypad = NULL;
-        }
+        delete m_pJoypad;
+        m_pJoypad = NULL;
 
-        if( NULL != m_pGpu )
-        {
-            delete m_pGpu;
-            m_pGpu = NULL;
-        }
+        delete m_pGpu;
+        m_pGpu = NULL;
 
-        if( NULL != m_pCpu )
-        {
-            delete m_pCpu;
-            m_pCpu = NULL;
-        }
+        delete m_pCpu;
+        m_pCpu = NULL;
 
-        if( NULL != m_pTimer )
-        {
-            delete m_pTimer;
-            m_pTimer = NULL;
-        }
+        delete m_pTimer;
+        m_pTimer = NULL;
 
-        if( NULL != m_pMem )
-        {
-            delete m_pMem;
-            m_pMem = NULL;
-        }
+        delete m_pMem;
+        m_pMem = NULL;
 
-        if( NULL != m_pFpsText )
-        {
-            delete m_pFpsText;
-            m_pFpsText = NULL;
-        }
+        delete m_pFpsText;
+        m_pFpsText = NULL;
 
         TTF_Quit();
         SDL_Quit();
@@ -251,7 +230,7 @@ void GBEmulator::Run()
 
         Update();
     }
-    
+
     Profiler()->DisplayProfiles();
 }
 
@@ -344,33 +323,26 @@ void GBEmulator::Update()
 void GBEmulator::Step()
 {
     int iFrameCycles    = 0;
-    int iCyclesTaken    = 0;
+    int iStepCycles     = 0;
 
     // Handle the emulation for this frame
     while( iFrameCycles < kMaxCyclesPerFrame )
     {
-        iCyclesTaken = 0;
-        {
-            PROFILE( "Cpu::ExecuteOpcode" );
+        iStepCycles = 0;
 
-            // Execute the next opcode
-            iCyclesTaken += m_pCpu->ExecuteOpcode();
-        }
+        // Execute the next opcode
+        iStepCycles += m_pCpu->ExecuteOpcode();
 
-        iCyclesTaken += m_pCpu->HandleInterrupts();
-        {
-            PROFILE( "Gpu::Update" );
+        // Handle interrupts
+        iStepCycles += m_pCpu->HandleInterrupts();
 
-            // Update the GPU
-            m_pGpu->Update( iCyclesTaken );
-        }
+        iFrameCycles += iStepCycles;
 
-        iFrameCycles += iCyclesTaken;
-        {
-            PROFILE( "Joypad::Update" );
-            // Update the joypad
-            m_pJoypad->Update();
-        }
+        // Update the GPU
+        m_pGpu->Update( iStepCycles );
+
+        // Update the joypad
+        m_pJoypad->Update();
     }
     m_u32LastFrameCycles = iFrameCycles;
 }

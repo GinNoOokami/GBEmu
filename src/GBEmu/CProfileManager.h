@@ -75,8 +75,8 @@ static CProfileManager* Profiler( void )
 
 int    SortProfiles( CProfiler* a, CProfiler* b );
 
-#ifndef NOPROFILE
-#define PROFILE( name ) CAutoProfile profile( ( const char* )( name ) )
+#if RUN_PROFILE
+#define PROFILE( name ) CAutoProfile profile((const char*)(name))
 #else
 #define PROFILE( name ) (void)sizeof( name )
 #endif

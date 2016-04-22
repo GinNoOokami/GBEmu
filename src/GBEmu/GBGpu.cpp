@@ -14,6 +14,8 @@
 
 #include "GBEmulator.h"
 #include "GBMem.h"
+
+#include "CProfileManager.h"
     
 //====================================================================================================
 // Class
@@ -55,6 +57,8 @@ void GBGpu::Reset()
 //----------------------------------------------------------------------------------------------------
 void GBGpu::Update( uint32 u32ElapsedClockCycles )
 {
+    PROFILE( "Gpu::Update" );
+
     ubyte u8LCDControl  = m_pMem->ReadMMIO( MMIOLCDControl );
     ubyte u8LCDStatus   = m_pMem->ReadMMIO( MMIOLCDStatus );
     ubyte u8LCDMode     = GetLCDMode( u8LCDStatus );

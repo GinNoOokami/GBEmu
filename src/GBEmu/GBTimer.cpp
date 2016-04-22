@@ -14,6 +14,8 @@
 #include "GBMem.h"
 #include "GBCpu.h"
 
+#include "CProfileManager.h"
+
 //====================================================================================================
 // Class
 //====================================================================================================
@@ -40,6 +42,8 @@ void GBTimer::Reset()
 //----------------------------------------------------------------------------------------------------
 void GBTimer::Update( uint32 u32ElapsedClockCycles )
 {
+    PROFILE( "Timer::Update" );
+
     ubyte u8TimerControl = m_pMem->ReadMMIO( MMIOTimerControl );
 
     int multiples = u32ElapsedClockCycles >> 2;

@@ -675,12 +675,15 @@ void GBCpu::SetPC( uint16 u16PC )
 //----------------------------------------------------------------------------------------------------
 int GBCpu::ExecuteOpcode()
 {
+    PROFILE( "Cpu::ExecuteOpcode" );
+
     uint32              iCycles        = 4;
     GBCpuOpcodeHandler  pfnHandler;
     ubyte               opcode;
 
     if( IsRunning() )
     {
+        /*
 #ifdef _DEBUG
         if( !m_pMem->IsBootRomEnabled() )
         {
@@ -700,7 +703,8 @@ int GBCpu::ExecuteOpcode()
             }
         }
 #endif
-        SetPC( m_PC );
+        */
+        //SetPC( m_PC );
 
         // Grab the current opcode
         opcode = ReadMemory( m_PC++ );
@@ -736,6 +740,8 @@ void GBCpu::RaiseInterrupt( Interrupt interrupt )
 //----------------------------------------------------------------------------------------------------
 int GBCpu::HandleInterrupts()
 {
+    PROFILE( "Cpu::HandleInterrupts" );
+
     ubyte u8InterruptFlags  = m_pMem->ReadMMIO( MMIOInterruptFlags );
     ubyte u8InterruptEnable = m_pMem->ReadMMIO( MMIOInterruptEnable );
 
