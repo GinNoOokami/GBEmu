@@ -17,6 +17,7 @@ ipch/
 *.user
 *.userosscache
 *.sln.docstates
+*.diagsession
 
 # Project specific files
 Log.html
