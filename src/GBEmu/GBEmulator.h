@@ -99,6 +99,10 @@ private:
 
     float           m_fElapsedTime;
     float           m_fNextFrame;
+    float           m_fLastFrame;
+    float           m_fIdleTime;
+    float           m_fAvgIdleTime;
+    uint32          m_u32TotalFrames;
     uint32          m_u32LastFrameCycles;
 
     SDL_Window*     m_pWindow;

@@ -51,7 +51,11 @@ GBEmulator::GBEmulator() :
     m_bCartridgeLoaded( false ),
     m_bDebugPaused( false ),
     m_fNextFrame( 0 ),
+    m_fLastFrame( 0 ),
     m_fElapsedTime( 0 ),
+    m_fIdleTime( 0 ),
+    m_fAvgIdleTime( 0 ),
+    m_u32TotalFrames( 0 ),
     m_u32LastFrameCycles( 0 ),
     m_pFpsText( NULL ),
     m_pWindow( NULL ),
@@ -238,9 +242,13 @@ void GBEmulator::Run()
 void GBEmulator::Reset()
 {
     m_u32LastFrameCycles    = 0;
+    m_u32TotalFrames        = 0;
 
     m_fElapsedTime          = 0.f;
-    m_fNextFrame            = static_cast<float>( SDL_GetTicks() );
+    m_fNextFrame            = 0.f;
+    m_fLastFrame            = 0.f;
+    m_fIdleTime             = 0.f;
+    m_fAvgIdleTime          = 0.f;
 
     m_pMem->Reset();
     m_pTimer->Reset();
@@ -292,28 +300,46 @@ void GBEmulator::Update()
 
         if( m_fElapsedTime >= m_fNextFrame )
         {
-            float fDelta = m_fElapsedTime - m_fNextFrame;
-
-            // Make sure we don't render faster than our framerate
-            fDelta = fDelta > k_fFrameTime ? k_fFrameTime : fDelta;
-
-            // Set the next frame render time
-            m_fNextFrame = m_fElapsedTime - fDelta + k_fFrameTime;
-
             if( !m_bDebugPaused )
             {
+                float fDelta = m_fElapsedTime - m_fNextFrame;
+
+                // Make sure we don't render faster than our framerate
+                fDelta = fDelta > k_fFrameTime ? k_fFrameTime : fDelta;
+
+                // Determine how much time was spend idle this frame since the end of the last emulation step
+                m_fIdleTime += m_fNextFrame - m_fLastFrame;
+                ++m_u32TotalFrames;
+
+                // Calculate the idle time over the last second and reset counters
+                if( static_cast<float>( m_u32TotalFrames ) >= k_fFrameRate )
+                {
+                    m_fAvgIdleTime      = static_cast<float>( m_fIdleTime / m_u32TotalFrames );
+                    m_fIdleTime         = 0;
+                    m_u32TotalFrames    = 0;
+                }
+
+                // Set the next frame render time
+                m_fNextFrame = m_fElapsedTime - fDelta + k_fFrameTime;
+
                 Step();
+
+                // Calculate the last frame time after emulation step
+                m_fLastFrame = static_cast<float>( SDL_GetTicks() );
+
+                GTimer()->Update();
+
+                // If the cart has a battery and something has changed, we need to update our .sav file
+                if( m_pCartridge->HasBattery()
+                    && m_pCartridge->IsRamDirty() )
+                {
+                    m_pCartridge->FlushRamToSaveFile( GB_BATTERY_DIRECTORY );
+                }
             }
-
-            GTimer()->Update();
-
-            // If the cart has a battery and something has changed, we need to update our .sav file
-            if(     m_pCartridge->HasBattery()
-                &&  m_pCartridge->IsRamDirty() )
-            {
-                m_pCartridge->FlushRamToSaveFile( GB_BATTERY_DIRECTORY );
-            }
-
+        }
+        else if( m_fNextFrame - m_fElapsedTime > 1.f )
+        {
+            // Wait a bit if we can, so we don't hog the cpu
             SDL_Delay( 1 );
         }
     }
@@ -360,11 +386,7 @@ void GBEmulator::Draw()
         SDL_RenderCopy( m_pRenderer, m_pTexture, NULL, NULL );
     }
 
-    // Note that this speed indicator is not really accurate; it does not take into account actual elapsed frame time
-    //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "%.1f%%", static_cast<float>( m_u32LastFrameCycles ) / 70224.f * 100.f );
-
-    m_pFpsText->draw( m_pRenderer, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f", GTimer()->GetFPS() );
-    //m_pFpsText->draw( m_pFrameSurface, 0, GBScreenHeight * ScreenScaleFactor - 20, "0x%x", m_pMem->ReadMemory( 0xFF85 ) );
+    m_pFpsText->draw( m_pRenderer, 0, GBScreenHeight * kScreenScaleFactor - 20, "%.1f (Idle: %.1f)", GTimer()->GetFPS(), m_fAvgIdleTime );
     
     SDL_RenderPresent( m_pRenderer );
 }
