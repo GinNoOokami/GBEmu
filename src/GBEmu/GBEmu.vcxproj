@@ -48,8 +48,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)\bin\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
-    <IncludePath>../lib/SDL-1.2.15/include;../lib/SDL_ttf-2.0.11\include;../lib/NFont;$(IncludePath)</IncludePath>
-    <LibraryPath>../lib/SDL-1.2.15\lib\x86;../lib\SDL_ttf-2.0.11\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>../lib/SDL2-2.0.4/include;../lib/SDL2_ttf-2.0.14\include;../lib/NFont;$(IncludePath)</IncludePath>
+    <LibraryPath>../lib/SDL2-2.0.4\lib\x86;../lib\SDL2_ttf-2.0.14\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -84,7 +84,7 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>SDL.lib;SDLmain.lib;SDL_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -117,6 +117,7 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     <ClInclude Include="GBMemBankController1.h" />
     <ClInclude Include="GBMemBankController2.h" />
     <ClInclude Include="GBMemBankController3.h" />
+    <ClInclude Include="GBMMIORegister.h" />
     <ClInclude Include="GBTimer.h" />
     <ClInclude Include="IGBMemBankController.h" />
   </ItemGroup>

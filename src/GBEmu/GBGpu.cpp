@@ -23,10 +23,35 @@
 GBGpu::GBGpu( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
     m_pEmulator( pEmulator ),
     m_pMem( pMemoryModule ),
+    m_u8LCDControl( 0 ),
+    m_u8LCDStatus( 0 ),
+    m_u8ScrollX( 0 ),
+    m_u8ScrollY( 0 ),
+    m_u8LCDScanline( 0 ),
+    m_u8LCDYCompare( 0 ),
+    m_u8DMATransfer( 0 ),
+    m_u8BGPalette( 0 ),
+    m_u8ObjectPalette0( 0 ),
+    m_u8ObjectPalette1( 0 ),
+    m_u8WindowY( 0 ),
+    m_u8WindowX( 0 ),
     m_u32ScanTime( 0 ),
     m_bIsVSync( false ),
     m_bIsHBlank( false )
 {
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOLCDControl,     &GBGpu::GetLCDControlRegister,      &GBGpu::SetLCDControlRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOLCDStatus,      &GBGpu::GetLCDStatusRegister,       &GBGpu::SetLCDStatusRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOScrollX,        &GBGpu::GetScrollXRegister,         &GBGpu::SetScrollXRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOScrollY,        &GBGpu::GetScrollYRegister,         &GBGpu::SetScrollYRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOLCDScanline,    &GBGpu::GetLCDScanlineRegister,     &GBGpu::SetLCDScanlineRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOLCDYCompare,    &GBGpu::GetLCDYCompareRegister,     &GBGpu::SetLCDYCompareRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIODMATransfer,    &GBGpu::GetDMATransferRegister,     &GBGpu::SetDMATransferRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOBGPalette,      &GBGpu::GetBGPaletteRegister,       &GBGpu::SetBGPaletteRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOObjectPalette0, &GBGpu::GetObjectPalette0Register,  &GBGpu::SetObjectPalette0Register );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOObjectPalette1, &GBGpu::GetObjectPalette1Register,  &GBGpu::SetObjectPalette1Register );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOWindowY,        &GBGpu::GetWindowYRegister,         &GBGpu::SetWindowYRegister );
+    SetMMIORegisterHandlers<GBGpu>( m_pMem, MMIOWindowX,        &GBGpu::GetWindowXRegister,         &GBGpu::SetWindowXRegister );
+
     Reset();
 
     m_PaletteLookup[ 0 ] = ColorWhite;
@@ -48,10 +73,23 @@ void GBGpu::Reset()
         m_u32ScreenData[ i ] = ColorWhite;
     }
 
-    m_u32ScanTime   = 0;
+    m_u8LCDControl      = 0;
+    m_u8LCDStatus       = 0;
+    m_u8ScrollX         = 0;
+    m_u8ScrollY         = 0;
+    m_u8LCDScanline     = 0;
+    m_u8LCDYCompare     = 0;
+    m_u8DMATransfer     = 0;
+    m_u8BGPalette       = 0;
+    m_u8ObjectPalette0  = 0;
+    m_u8ObjectPalette1  = 0;
+    m_u8WindowY         = 0;
+    m_u8WindowX         = 0;
 
-    m_bIsVSync      = false;
-    m_bIsHBlank     = false;
+    m_u32ScanTime       = 0;
+
+    m_bIsVSync          = false;
+    m_bIsHBlank         = false;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -59,28 +97,24 @@ void GBGpu::Update( uint32 u32ElapsedClockCycles )
 {
     PROFILE( "Gpu::Update" );
 
-    ubyte u8LCDControl  = m_pMem->ReadMMIO( MMIOLCDControl );
-    ubyte u8LCDStatus   = m_pMem->ReadMMIO( MMIOLCDStatus );
-    ubyte u8LCDMode     = GetLCDMode( u8LCDStatus );
-
     m_u32ScanTime += u32ElapsedClockCycles;
 
-    switch( u8LCDMode )
+    switch( GetLCDMode() )
     {
         case ModeOam:
             if( m_u32ScanTime >= 80 )
             {
-                SetLCDMode( u8LCDStatus, ModeOamRam );
+                SetLCDMode( ModeOamRam );
             }
             break;
 
         case ModeOamRam:
             if( m_u32ScanTime >= 252 )
             {
-                SetLCDMode( u8LCDStatus, ModeHBlank );
+                SetLCDMode( ModeHBlank );
 
-                if(     IsLCDEnabled( u8LCDControl )
-                    &&  IsLCDInterruptEnabled( u8LCDStatus, LCDIntHBlank ) )
+                if(     IsLCDEnabled()
+                    &&  IsLCDInterruptEnabled( LCDIntHBlank ) )
                 {
                     m_pEmulator->RaiseInterrupt( LCDStatus );
                 }
@@ -92,16 +126,13 @@ void GBGpu::Update( uint32 u32ElapsedClockCycles )
     
     if( m_u32ScanTime >= 456 )
     {
-        DoScanline( u8LCDControl, u8LCDStatus );
+        DoScanline();
     }
 
     if( !IsVSyncOrHBlank() )
     {
         //printf( "Scantime: %d LCD Mode: %d Scanline: %d\n", m_u32ScanTime, GetLCDMode( u8LCDStatus ), m_pMem->ReadMMIO( MMIOLCDScanline ) );
     }
-
-    m_pMem->WriteMMIO( MMIOLCDControl, u8LCDControl );
-    m_pMem->WriteMMIO( MMIOLCDStatus, u8LCDStatus );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -111,123 +142,129 @@ const uint32* GBGpu::GetScreenData() const
 }
 
 //----------------------------------------------------------------------------------------------------
-bool GBGpu::IsLCDEnabled() const
+void GBGpu::SetDMATransferRegister( ubyte u8Data )
 {
-    return 0 != ( m_pMem->ReadMMIO( MMIOLCDControl ) & 0x80 );
+    m_u8DMATransfer = u8Data;
+    for( int i = 0; i < 0x100; ++i )
+    {
+        m_pMem->WriteMemory( 0xFE00 + i, m_pMem->ReadMemory( ( u8Data << 8 ) + i ) );
+    }
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBGpu::DoScanline( ubyte& u8LCDControl, ubyte& u8LCDStatus )
+void GBGpu::DoScanline()
 {
-    bool bLCDEnabled = IsLCDEnabled( u8LCDControl );
+    bool bLCDEnabled = IsLCDEnabled();
+    bool bEndVsync   = false;
 
     m_u32ScanTime -= 456;
 
-    ubyte u8CurrentScanline = m_pMem->ReadMMIO( MMIOLCDScanline );
-    m_pMem->WriteMMIO( MMIOLCDScanline, u8CurrentScanline + 1 );
-
-    if( u8CurrentScanline < 144 )
+    if( m_u8LCDScanline < 144 )
     {
         // Render the current line
         if( bLCDEnabled )
         {
-            DrawLine( u8LCDControl, u8CurrentScanline );
+            DrawLine();
         }
 
         // Entering OAM mode
-        SetLCDMode( u8LCDStatus, ModeOam );
+        SetLCDMode( ModeOam );
 
         m_bIsHBlank = false;
     }
-    else if( u8CurrentScanline == 144 )
+    else if( m_u8LCDScanline == 144 )
     {
         // Entering V-Blank
-        SetLCDMode( u8LCDStatus, ModeVBlank );
+        SetLCDMode( ModeVBlank );
 
         m_pEmulator->RaiseInterrupt( VBlank );
 
         // Raise an interrupt if we can
         if(     bLCDEnabled
-            &&  IsLCDInterruptEnabled( u8LCDControl, LCDIntVBlank ) )
+            &&  IsLCDInterruptEnabled( LCDIntVBlank ) )
         {
             m_pEmulator->RaiseInterrupt( LCDStatus );
         }
 
         m_bIsVSync = true;
     }
-    else if( u8CurrentScanline > 153 )
+    else if( m_u8LCDScanline > 153 )
     {
-        u8CurrentScanline = 0;
-        m_pMem->WriteMMIO( MMIOLCDScanline, u8CurrentScanline );
-
         // Raise an interrupt if we can
         if(     bLCDEnabled
-            &&  IsLCDInterruptEnabled( u8LCDStatus, LCDIntOam ) )
+            &&  IsLCDInterruptEnabled( LCDIntOam ) )
         {
             m_pEmulator->RaiseInterrupt( LCDStatus );
         }
 
         m_bIsVSync = false;
+        bEndVsync = true;
     }
 
     // Set the coincidence flag if LY == LYC
-    if( m_pMem->ReadMMIO( MMIOLCDYCompare ) == ( u8CurrentScanline % 154 ) )
+    if( m_u8LCDYCompare == m_u8LCDScanline )
     {
-        SetCoincidenceFlag( u8LCDStatus, true );
+        SetCoincidenceFlag( true );
 
         // Raise an interrupt if necessary
-        if( IsLCDInterruptEnabled( u8LCDStatus, LCDIntLyc ) )
+        if( IsLCDInterruptEnabled( LCDIntLyc ) )
         {
             m_pEmulator->RaiseInterrupt( LCDStatus );
         }
     }
     else
     {
-        SetCoincidenceFlag( u8LCDStatus, false );
+        SetCoincidenceFlag( false );
+    }
+
+    if( !bEndVsync )
+    {
+        ++m_u8LCDScanline;
+    }
+    else
+    {
+        m_u8LCDScanline = 0;
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBGpu::DrawLine( ubyte& u8LCDControl, ubyte u8Scanline )
+void GBGpu::DrawLine()
 {
-    uint32 u32Offset = u8Scanline * GBScreenWidth;
+    uint32 u32Offset = m_u8LCDScanline * GBScreenWidth;
     for( uint32 i = u32Offset; i < u32Offset + GBScreenWidth; ++i )
     {
         m_u32ScreenData[ i ] = ColorWhite;
     }
 
-    if( IsBackgroundEnabled( u8LCDControl ) )
+    if( IsBackgroundEnabled() )
     {
-        DrawBackground( u8LCDControl, u8Scanline );
+        DrawBackground();
     }
 
-    if( IsWindowEnabled( u8LCDControl ) )
+    if( IsWindowEnabled() )
     {
-        DrawWindow( u8LCDControl, u8Scanline );
+        DrawWindow();
     }
 
-    if( IsSpriteEnabled( u8LCDControl ) )
+    if( IsSpriteEnabled() )
     {
-        DrawSprites( u8LCDControl, u8Scanline );
+        DrawSprites();
     }
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBGpu::DrawBackground( ubyte u8LCDControl, ubyte u8Scanline )
+void GBGpu::DrawBackground()
 {
-    ubyte u8Palette         = m_pMem->ReadMMIO( MMIOBGPalette );
-    ubyte u8ScrollY         = m_pMem->ReadMMIO( MMIOScrollY );
-    ubyte u8ScrollX         = m_pMem->ReadMMIO( MMIOScrollX );
-    ubyte u8TileY           = ( ( ( u8Scanline + u8ScrollY ) & 0xFF ) >> 3 ) & 0x1F;
-    ubyte u8TileX           = u8ScrollX >> 3;
-    ubyte py                = ( u8ScrollY + u8Scanline ) & 7;
-    ubyte px                = u8ScrollX & 7;
-    uint16 u16TileDataAddr  = GetTileDataSelect( u8LCDControl ) ? TileDataSelect1 : TileDataSelect0;
-    uint16 u16TileMapAddr   = GetBackgroundTileMapSelect( u8LCDControl ) ? BgTileMapSelect1 : BgTileMapSelect0;
+    ubyte u8TileY           = ( ( ( m_u8LCDScanline + m_u8ScrollY ) & 0xFF ) >> 3 ) & 0x1F;
+    ubyte u8TileX           = m_u8ScrollX >> 3;
+    ubyte py                = ( m_u8ScrollY + m_u8LCDScanline ) & 7;
+    ubyte px                = m_u8ScrollX & 7;
+    uint16 u16TileDataAddr  = GetTileDataSelect() ? TileDataSelect1 : TileDataSelect0;
+    uint16 u16TileMapAddr   = GetBackgroundTileMapSelect() ? BgTileMapSelect1 : BgTileMapSelect0;
     uint16 u16TileData      = GetMapTileData( u16TileMapAddr, u16TileDataAddr, u8TileX, u8TileY, py );
     ubyte palette           = 0;
 
-    uint32 u32Offset = u8Scanline * GBScreenWidth;
+    uint32 u32Offset = m_u8LCDScanline * GBScreenWidth;
     for( uint32 i = u32Offset; i < u32Offset + GBScreenWidth; ++i )
     {
         // Grab the palette index for the current pixel from the tile data 
@@ -237,7 +274,7 @@ void GBGpu::DrawBackground( ubyte u8LCDControl, ubyte u8Scanline )
         px &= 7;
 
         // Fill in the screen data with the current pixel color
-        m_u32ScreenData[ i ] = m_PaletteLookup[ ( u8Palette >> ( palette * 2 ) ) & 3 ];
+        m_u32ScreenData[ i ] = m_PaletteLookup[ ( m_u8BGPalette >> ( palette * 2 ) ) & 3 ];
 
         // If we're on a new tile, we need to grab new data
         if( 0 == px )
@@ -248,35 +285,36 @@ void GBGpu::DrawBackground( ubyte u8LCDControl, ubyte u8Scanline )
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBGpu::DrawWindow( ubyte u8LCDControl, ubyte u8Scanline )
-{    
-    ubyte u8Palette         = m_pMem->ReadMMIO( MMIOBGPalette );
-    ubyte u8WindowY         = m_pMem->ReadMMIO( MMIOWindowY );
-    ubyte u8WindowX         = m_pMem->ReadMMIO( MMIOWindowX );
-    ubyte u8TileY           = ( ( u8Scanline - u8WindowY ) & 0xFF ) >> 3;
+void GBGpu::DrawWindow()
+{
+    ubyte u8WindowY = m_u8WindowY;
+    ubyte u8WindowX         = m_u8WindowX;
+    ubyte u8TileY           = ( ( m_u8LCDScanline - m_u8WindowY ) & 0xFF ) >> 3;
     ubyte u8TileX           = 0;
-    ubyte py                = ( u8Scanline - u8WindowY ) & 7;
+    ubyte py                = ( m_u8LCDScanline - m_u8WindowY ) & 7;
     ubyte px                = 0;
-    uint16 u16DeltaY        = u8Scanline - u8WindowY;
+    uint16 u16DeltaY        = m_u8LCDScanline - m_u8WindowY;
 
     if(     u8WindowX <= 166
         &&  u8WindowY <= 143
         &&  u16DeltaY < 144 )
     {
-        uint16 u16TileDataAddr  = GetTileDataSelect( u8LCDControl ) ? TileDataSelect1 : TileDataSelect0;
-        uint16 u16TileMapAddr   = GetWindowTileMapSelect( u8LCDControl ) ? WindowTileMapSelect1 : WindowTileMapSelect0;
+        uint16 u16TileDataAddr  = GetTileDataSelect() ? TileDataSelect1 : TileDataSelect0;
+        uint16 u16TileMapAddr   = GetWindowTileMapSelect() ? WindowTileMapSelect1 : WindowTileMapSelect0;
         uint16 u16TileData      = GetMapTileData( u16TileMapAddr, u16TileDataAddr, u8TileX, u8TileY, py );
         ubyte palette           = 0;
 
+        // LCD window is offset by 7 on the x axis
         u8WindowX -= 7;
 
+        // TODO: Comment this behavior
         if( u8WindowX > 166 )
         {
-            px =  7 - ( u8WindowX + 7 );
+            px = 7 - ( u8WindowX + 7 );
             u8WindowX = 0;
         }
 
-        uint32 u32Offset = u8Scanline * GBScreenWidth;
+        uint32 u32Offset = m_u8LCDScanline * GBScreenWidth;
         for( uint32 i = u32Offset + u8WindowX; i < u32Offset + GBScreenWidth; ++i )
         {
             // Grab the palette index for the current pixel from the tile data 
@@ -286,7 +324,7 @@ void GBGpu::DrawWindow( ubyte u8LCDControl, ubyte u8Scanline )
             px &= 7;
 
             // Fill in the screen data with the current pixel color
-            m_u32ScreenData[ i ] = m_PaletteLookup[ ( u8Palette >> ( palette * 2 ) ) & 3 ];
+            m_u32ScreenData[ i ] = m_PaletteLookup[ ( m_u8BGPalette >> ( palette * 2 ) ) & 3 ];
 
             // If we're on a new tile, we need to grab new data
             if( 0 == px )
@@ -299,21 +337,19 @@ void GBGpu::DrawWindow( ubyte u8LCDControl, ubyte u8Scanline )
 }
 
 //----------------------------------------------------------------------------------------------------
-void GBGpu::DrawSprites( ubyte u8LCDControl, ubyte u8Scanline )
+void GBGpu::DrawSprites()
 {
     OamData oSpriteData;
     OamData arSpriteData[ 10 ]  = {};
-    ubyte    u8ObjPalette0      = m_pMem->ReadMMIO( MMIOObjectPalette0 );
-    ubyte    u8ObjPalette1      = m_pMem->ReadMMIO( MMIOObjectPalette1 );
     ubyte    u8Palette          = 0;
     ubyte    u8PaletteIndex     = 0;
-    ubyte    u8Height           = GetSpriteSize( u8LCDControl );
+    ubyte    u8Height           = GetSpriteSize();
     ubyte    u8LineY            = 0;
-    uint16    u16TileData       = 0;
-    uint32    u32Offset         = u8Scanline * GBScreenWidth;
-    int        iSpriteCount     = 0;
-    int        i;
-    int        j;
+    uint16   u16TileData        = 0;
+    uint32   u32Offset          = m_u8LCDScanline * GBScreenWidth;
+    int      iSpriteCount       = 0;
+    int      i;
+    int      j;
 
     for( i = 0; i < 40 && iSpriteCount < 10; ++i )
     {
@@ -321,7 +357,7 @@ void GBGpu::DrawSprites( ubyte u8LCDControl, ubyte u8Scanline )
         
         // Only include the sprites that are within the current scanline
         // Negative unsigned overflow will fail the height check
-        u8LineY = u8Scanline - ( oSpriteData.y - 16 );
+        u8LineY = m_u8LCDScanline - ( oSpriteData.y - 16 );
         if( u8LineY < u8Height )
         {
             arSpriteData[ iSpriteCount++ ] = oSpriteData;
@@ -351,11 +387,11 @@ void GBGpu::DrawSprites( ubyte u8LCDControl, ubyte u8Scanline )
         ubyte tile    = oSpriteData.tileIndex;
 
         // Least significant bit is 0 if using 16 height sprite mode
-        tile = tile & ~( ( u8LCDControl & 0x04 ) >> 2 );
+        tile = tile & ~( ( m_u8LCDControl & 0x04 ) >> 2 );
 
         // Only include the sprites that are within the current scanline
         // Negative unsigned overflow will fail the height check
-        u8LineY = u8Scanline - ( oSpriteData.y - 16 );
+        u8LineY = m_u8LCDScanline - ( oSpriteData.y - 16 );
 
         // Swap the line if the Y flip attribute is set for this sprite
         if( oSpriteData.attributeFlags & OamAttrFlipY )
@@ -364,7 +400,7 @@ void GBGpu::DrawSprites( ubyte u8LCDControl, ubyte u8Scanline )
         }
 
         // Grab the current object palette
-        u8Palette = 0 != ( oSpriteData.attributeFlags & OamAttrPalette ) ? u8ObjPalette1 : u8ObjPalette0;
+        u8Palette = 0 != ( oSpriteData.attributeFlags & OamAttrPalette ) ? m_u8ObjectPalette1 : m_u8ObjectPalette0;
 
         // Grab the current object tile data
         u16TileData = GetSpriteTileData( tile, u8LineY );

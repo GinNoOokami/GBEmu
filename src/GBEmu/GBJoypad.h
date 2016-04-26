@@ -13,6 +13,8 @@
 
 #include "emutypes.h"
 
+#include "GBMMIORegister.h"
+
 //====================================================================================================
 // Foward Declarations
 //====================================================================================================
@@ -41,11 +43,11 @@ enum JoypadButton
 // Class
 //====================================================================================================
 
-class GBJoypad
+class GBJoypad : public GBMMIORegister
 {
 public:
     GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule );
-    ~GBJoypad();
+    virtual ~GBJoypad();
 
     void            Reset();
 
@@ -53,9 +55,14 @@ public:
     void            SimulateKeyDown( JoypadButton button );
     void            SimulateKeyUp( JoypadButton button );
 
+    inline ubyte    GetStateRegister() const                { return m_u8StateRegister;             }
+    inline void     SetStateRegister( ubyte u8Data )        { m_u8StateRegister = u8Data & 0x3f;    }
+
 private:
     GBEmulator*     m_pEmulator;
     GBMem*          m_pMem;
+
+    ubyte           m_u8StateRegister;
 
     uint32          m_u32KeyStatus;
 };

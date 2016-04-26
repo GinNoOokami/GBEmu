@@ -13,35 +13,10 @@
 
 #include "emutypes.h"
 
-//====================================================================================================
-// Global Enums
-//====================================================================================================
+#include <map>
+#include <utility>
 
-// Special registers
-enum MMIO
-{
-    MMIOJoypad                  = 0xFF00,
-    MMIODivider                 = 0xFF04,
-    MMIOTimerCounter            = 0xFF05,
-    MMIOTimerModulo             = 0xFF06,
-    MMIOTimerControl            = 0xFF07,
-    MMIOLCDControl              = 0xFF40,
-    MMIOLCDStatus               = 0xFF41,
-    MMIOScrollY                 = 0xFF42,
-    MMIOScrollX                 = 0xFF43,
-    MMIOLCDScanline             = 0xFF44,
-    MMIOLCDYCompare             = 0xFF45,
-    MMIODMATransfer             = 0xFF46,
-    MMIOBGPalette               = 0xFF47,
-    MMIOObjectPalette0          = 0xFF48,
-    MMIOObjectPalette1          = 0xFF49,
-    MMIOWindowY                 = 0xFF4A,
-    MMIOWindowX                 = 0xFF4B,
-    MMIOKey1                    = 0xFF4D, // CGB only
-    MMIOInterruptFlags          = 0xFF0F,
-    MMIOBiosDisabled            = 0xFF50,
-    MMIOInterruptEnable         = 0xFFFF
-};
+#include "GBMMIORegister.h"
 
 //====================================================================================================
 // Global Structs
@@ -64,16 +39,20 @@ class IGBMemBankController;
 // Class
 //====================================================================================================
 
-class GBMem
+class GBMem : public GBMMIORegister
 {
+    //====================================================================================================
+    // Class Typedefs
+    //====================================================================================================
+    typedef std::map<MMIORegister, std::pair<GBMMIORegister*, MMIOReadHandler>> MMIOReadHandlers;
+    typedef std::map<MMIORegister, std::pair<GBMMIORegister*, MMIOWriteHandler>> MMIOWriteHandlers;
+
 public:
     // Constructor / destructor
     GBMem( void );
-    ~GBMem( void );
+    virtual ~GBMem( void );
 
     void                    Reset();
-
-    inline bool             IsBootRomEnabled()                                      { return m_bBiosEnabled;            }
 
     void                    LoadMemory( ubyte* pData, uint32 u32Offset, size_t size );
 
@@ -83,24 +62,32 @@ public:
     OamData                 ReadSpriteData( uint32 u32Slot ) const;
     void                    WriteSpriteData( uint32 u32Slot );
 
-    inline void             SetMemBankController( IGBMemBankController* pMBC )      { m_pMemBankController = pMBC;      }
+    inline void             SetMemBankController( IGBMemBankController* pMBC )              { m_pMemBankController = pMBC;      }
 
-    inline ubyte            ReadMMIO( MMIO ioRegister )                             { return m_Memory[ ioRegister ];    }
-    inline void             WriteMMIO( MMIO ioRegister, ubyte u8Data )              { m_Memory[ ioRegister ] = u8Data;  }
+    void                    RegisterMMIOReadHandler( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOReadHandler fnHandler );
+    void                    RegisterMMIOWriteHandler( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOWriteHandler fnHandler );
+    void                    RegisterMMIOHandlers( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOReadHandler fnReadHandler, MMIOWriteHandler fnWriteHandler );
 
     ubyte                   DebugReadMemory( uint16 u16Address );
     void                    DebugWriteMemory( uint16 u16Address, ubyte u8Data );
     void                    DebugWriteMemory( uint16 u16Address, ubyte u8Data[], uint16 u16Size );
 
 private:
+    inline ubyte            GetBiosDisabledRegister() const                                 { return !m_bBiosEnabled;           }
+    inline void             SetBiosDisabledRegister( ubyte u8Data )                         { m_bBiosEnabled = ( 0 == u8Data ); }
+
+private:
     static ubyte            GBBios[ 0x100 ];
 
     ubyte                   m_Memory[ 0x10000 ];
 
+    GBNullMMIORegister      m_oNullMMIORegister[ 0x100 ];
+    MMIOReadHandlers        m_MMIROReadHandlers;
+    MMIOWriteHandlers       m_MMIOWriteHandlers;
+
     IGBMemBankController*   m_pMemBankController;
 
     bool                    m_bBiosEnabled;
-    bool                    m_bResetTimer;
 };
 
 #endif

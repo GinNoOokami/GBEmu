@@ -13,6 +13,7 @@
 
 #include "emutypes.h"
 
+#include "GBMMIORegister.h"
 #include "GBEmulator.h"
 
 //====================================================================================================
@@ -27,7 +28,7 @@ class GBCpuUnitTest;
 // Class
 //====================================================================================================
 
-class GBCpu
+class GBCpu : public GBMMIORegister
 {
     friend class GBCpuUnitTest;
 
@@ -101,14 +102,10 @@ public:
 public:
     // Constructor / destructor
     GBCpu( GBMem* pMemoryModule, GBTimer* pTimer );
-    ~GBCpu( void );
+    virtual ~GBCpu( void );
 
     void            SetPC( uint16 u16PC );
     bool            m_bInit;
-
-    // Startup and cleanup
-    void            Initialize();
-    void            Terminate();
 
     // Cpu functions
     void            Reset();
@@ -118,13 +115,23 @@ public:
     int             HandleInterrupts();
 
 private:
+    // Startup and cleanup
+    void            Initialize();
+    void            Terminate();
+
     // Utility functions
     inline uint16   GetRegisterPair( RegisterPair pair )                { return m_Registers[ pair ] << 8 | m_Registers[ pair + 1 ];                                                    }
     inline void     SetRegisterPair( RegisterPair pair, uint16 value )  { m_Registers[ pair ] = value >> 8; m_Registers[ pair + 1 ]    = ( AF != pair ) ? value & 0xFF : value & 0xF0;  }
 
     inline bool     GetRegisterFlag( RegisterFlag flag )                { return 0 != ( m_Registers[ F ] & flag );                                                                      }
     inline void     SetRegisterFlag( RegisterFlag flag, bool value )    { value ? m_Registers[ F ] |= flag : m_Registers[ F ] &= ~flag;                                                 }
-    
+
+    inline ubyte    GetInterruptFlagsRegister() const                   { return m_u8InterruptFlags;                    }
+    inline void     SetInterruptFlagsRegsiter( ubyte u8Data )           { m_u8InterruptFlags = u8Data;                  }
+
+    inline ubyte    GetInterruptEnableRegister() const                  { return m_u8InterruptEnable;                   }
+    inline void     SetInterruptEnableRegsiter( ubyte u8Data )          { m_u8InterruptEnable = u8Data;                 }
+
     ubyte           ReadMemory( uint16 u16Addr );
     void            WriteMemory( uint16 u16Addr, ubyte u8Data );
     void            SimulateIO( ubyte u8Clocks );
@@ -298,6 +305,11 @@ private:
     bool                m_bHalt;
     bool                m_bStop;
     bool                m_bIME;
+    bool                m_bBiosDisabled;
+
+    // Interrupts
+    ubyte               m_u8InterruptFlags;
+    ubyte               m_u8InterruptEnable;
 
     // Debug data
     uint16              m_DebugPC;

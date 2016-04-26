@@ -22,9 +22,17 @@
 GBTimer::GBTimer( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
     m_pEmulator( pEmulator ),
     m_pMem( pMemoryModule ),
+    m_u8ControlRegister( 0 ),
+    m_u8DividerRegister( 0 ),
+    m_u8CounterRegister( 0 ),
+    m_u8ModuloRegister( 0 ),
     m_u32TimerCycles( 0 ),
     m_u32TimerDiv( 0 )
 {
+    SetMMIORegisterHandlers<GBTimer>( m_pMem, MMIOTimerControl, &GBTimer::GetControlRegister, &GBTimer::SetControlRegister );
+    SetMMIORegisterHandlers<GBTimer>( m_pMem, MMIODivider,      &GBTimer::GetDividerRegister, &GBTimer::SetDividerRegister );
+    SetMMIORegisterHandlers<GBTimer>( m_pMem, MMIOTimerCounter, &GBTimer::GetCounterRegister, &GBTimer::SetCounterRegister );
+    SetMMIORegisterHandlers<GBTimer>( m_pMem, MMIOTimerModulo,  &GBTimer::GetModuloRegister,  &GBTimer::SetModuloRegister );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -35,16 +43,19 @@ GBTimer::~GBTimer()
 //----------------------------------------------------------------------------------------------------
 void GBTimer::Reset()
 {
-    m_u32TimerCycles    = 0;
-    m_u32TimerDiv       = 0;
+    m_u8ControlRegister    = 0;
+    m_u8DividerRegister    = 0;
+    m_u8CounterRegister    = 0;
+    m_u8ModuloRegister     = 0;
+
+    m_u32TimerCycles       = 0;
+    m_u32TimerDiv          = 0;
 }
 
 //----------------------------------------------------------------------------------------------------
 void GBTimer::Update( uint32 u32ElapsedClockCycles )
 {
     PROFILE( "Timer::Update" );
-
-    ubyte u8TimerControl = m_pMem->ReadMMIO( MMIOTimerControl );
 
     int multiples = u32ElapsedClockCycles >> 2;
     for( int i = 0; i < multiples; ++i )
@@ -65,17 +76,16 @@ void GBTimer::Update( uint32 u32ElapsedClockCycles )
         if( m_u32TimerDiv >= 256 )
         {
             // Update the divider register
-            ubyte u8Divider = m_pMem->ReadMMIO( MMIODivider );
-            m_pMem->WriteMMIO( MMIODivider, ++u8Divider );
+            ++m_u8DividerRegister;
             m_u32TimerDiv -= 256;
         }
 
         // Update the timer at the set frequency
-        if( IsTimerEnabled( u8TimerControl ) )
+        if( IsTimerEnabled( m_u8ControlRegister ) )
         {
             bool bUpdateTimer = false;
 
-            switch( GetTimerMode( u8TimerControl ) )
+            switch( GetTimerMode( m_u8ControlRegister ) )
             {
                 case Freq4096Hz:
                     if( 0 == ( m_u32TimerCycles & 1023 ) )
@@ -105,17 +115,15 @@ void GBTimer::Update( uint32 u32ElapsedClockCycles )
 
             if( bUpdateTimer )
             {
-                ubyte u8TimerCounter = m_pMem->ReadMMIO( MMIOTimerCounter );
-
-                if( 0xFF != u8TimerCounter )
+                if( 0xFF != m_u8CounterRegister )
                 {
                     // Just write the updated value to TIMA
-                    m_pMem->WriteMMIO( MMIOTimerCounter, ++u8TimerCounter );
+                    ++m_u8CounterRegister;
                 }
                 else
                 {
                     // Set the TIMA value to TMA
-                    m_pMem->WriteMMIO( MMIOTimerCounter, m_pMem->ReadMMIO( MMIOTimerModulo ) );
+                    m_u8CounterRegister = m_u8ModuloRegister;
 
                     // Raise a timer interrupt
                     m_pEmulator->RaiseInterrupt( Timer );

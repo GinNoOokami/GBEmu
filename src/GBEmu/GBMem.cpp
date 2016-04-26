@@ -45,9 +45,19 @@ ubyte GBMem::GBBios[ 0x100 ] =
 
 GBMem::GBMem( void ) :
     m_pMemBankController( NULL ),
-    m_bBiosEnabled( true ),
-    m_bResetTimer( false )
+    m_bBiosEnabled( true )
 {
+    // Map the default MMIO handlers
+    for( int i = MMIORegisterStart; i <= MMIORegisterEnd; ++i )
+    {
+        RegisterMMIOHandlers( (MMIORegister)i, 
+                              &m_oNullMMIORegister[ i & 0xff ], 
+                              static_cast<MMIOReadHandler>( &GBNullMMIORegister::ReadRegisterNoop ),
+                              static_cast<MMIOWriteHandler>( &GBNullMMIORegister::WriteRegisterNoop ) );
+    }
+
+    SetMMIORegisterHandlers<GBMem>( this, MMIOBiosDisabled, &GBMem::GetBiosDisabledRegister, &GBMem::SetBiosDisabledRegister );
+
     Reset();
 }
 
@@ -62,7 +72,6 @@ void GBMem::Reset()
     m_pMemBankController    = NULL;
 
     m_bBiosEnabled          = true;
-    m_bResetTimer           = false;
 
     memset( m_Memory, 0, sizeof( m_Memory ) );
 }
@@ -80,6 +89,17 @@ ubyte GBMem::ReadMemory( uint16 u16Address )
         &&  u16Address < 0x100    )
     {
         return GBBios[ u16Address ];
+    }
+
+    // Handle MMIO registers if the address begins with 0xffxx
+    if( 0xFF00 == ( u16Address & 0xFF00 ) )
+    {
+        auto callback    = m_MMIROReadHandlers[ (MMIORegister)u16Address ];
+        auto pController = callback.first;
+        auto pfnHandler  = callback.second;
+
+        // Invoke the register handler
+        return ( pController->*pfnHandler )( );
     }
 
     if( u16Address >= 0x4000 && u16Address < 0x8000 )
@@ -105,54 +125,16 @@ ubyte GBMem::ReadMemory( uint16 u16Address )
 //----------------------------------------------------------------------------------------------------
 void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 {
-    if( 0xFF == ( u16Address >> 8 ) )
+    // Handle MMIO registers if the address begins with 0xffxx
+    if( 0xFF00 == ( u16Address & 0xFF00 ) )
     {
-        // Handle writes to the IO registers
-        switch( u16Address )
-        {
-            case MMIOTimerCounter:
-                m_bResetTimer = true;
-                break;
+        auto callback    = m_MMIOWriteHandlers[ (MMIORegister)u16Address ];
+        auto pController = callback.first;
+        auto pfnHandler  = callback.second;
 
-            case MMIOLCDControl:
-                m_Memory[ u16Address ] = u8Data;
-                return;
-
-            case MMIOLCDStatus:
-                // Lower 3 bits are read-only, msb is unused
-                m_Memory[ u16Address ] = u8Data & 0x78;
-                return;
-
-            case MMIOLCDScanline:
-                m_Memory[ u16Address ] = 0;
-                return;
-
-            case MMIODMATransfer:
-                for( int i = 0; i < 0x100; ++i )
-                {
-                    WriteMemory( 0xFE00 + i, ReadMemory( ( u8Data << 8 ) + i ) );
-                }
-                return;
-
-            case MMIOBiosDisabled:
-                m_bBiosEnabled = ( 0 == u8Data );
-                break;
-
-            case MMIODivider:
-                m_Memory[ u16Address ] = 0;
-                return;
-
-            // KEY1 register not supported by DMG, always read default speed
-            case MMIOKey1:
-                m_Memory[ u16Address ] = 0;
-                return;
-        }
-    }
-
-    if(     u16Address >= 0xA000
-        &&  u16Address < 0xC000 )
-    {
-        int a = 1;
+        // Invoke the register handler
+        ( pController->*pfnHandler )( u8Data );
+        return;
     }
 
     if(     u16Address < 0x8000
@@ -179,9 +161,28 @@ void GBMem::WriteMemory( uint16 u16Address, ubyte u8Data )
 }
 
 //----------------------------------------------------------------------------------------------------
+void GBMem::RegisterMMIOReadHandler( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOReadHandler fnHandler )
+{
+    m_MMIROReadHandlers[ eMMIORegister ] = std::make_pair( pRegisterController, fnHandler );
+}
+
+//----------------------------------------------------------------------------------------------------
+void GBMem::RegisterMMIOWriteHandler( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOWriteHandler fnHandler )
+{
+    m_MMIOWriteHandlers[ eMMIORegister ] = std::make_pair( pRegisterController, fnHandler );
+}
+
+//----------------------------------------------------------------------------------------------------
+void GBMem::RegisterMMIOHandlers( MMIORegister eMMIORegister, GBMMIORegister* pRegisterController, MMIOReadHandler fnReadHandler, MMIOWriteHandler fnWriteHandler )
+{
+    RegisterMMIOReadHandler( eMMIORegister, pRegisterController, fnReadHandler );
+    RegisterMMIOWriteHandler( eMMIORegister, pRegisterController, fnWriteHandler );
+}
+
+//----------------------------------------------------------------------------------------------------
 OamData GBMem::ReadSpriteData( uint32 u32Slot ) const
 {
-    OamData    oSpriteData;
+    OamData   oSpriteData;
     uint16    u16BaseAddress    = 0xFE00 + ( u32Slot * sizeof( oSpriteData ) );
 
     oSpriteData.y               = m_Memory[ u16BaseAddress + 0 ];

@@ -15,6 +15,8 @@
 
 #include <stdio.h>
 
+#include "GBMMIORegister.h"
+
 //====================================================================================================
 // Foward Declarations
 //====================================================================================================
@@ -35,7 +37,7 @@ enum
 // Class
 //====================================================================================================
 
-class GBGpu
+class GBGpu : public GBMMIORegister
 {
     enum
     {
@@ -91,43 +93,77 @@ class GBGpu
 public:
     // Constructor / destructor
     GBGpu( GBEmulator* pEmulator, GBMem* pMemoryModule );
-    ~GBGpu( void );
+    virtual ~GBGpu( void );
 
     void            Reset();
 
     void            Update( uint32 u32ElapsedClockCycles );
     const uint32*   GetScreenData() const;
 
-    bool            IsVSyncOrHBlank() const                                                         { return m_bIsVSync || m_bIsHBlank;                     }
-    bool            IsVSync() const                                                                 { return m_bIsVSync;                                    }
+    bool            IsVSyncOrHBlank() const                                     { return m_bIsVSync || m_bIsHBlank;                         }
+    bool            IsVSync() const                                             { return m_bIsVSync;                                        }
 
-    bool            IsLCDEnabled() const;
-    uint32          GetBlankColor() const                                                           { return ColorWhite;                                    }
+    uint32          GetBlankColor() const                                       { return ColorWhite;                                        }
 
+    ubyte           GetLCDControlRegister() const                               { return m_u8LCDControl;                                    }
+    void            SetLCDControlRegister( ubyte u8Data )                       { m_u8LCDControl = u8Data;                                  }
+
+    ubyte           GetLCDStatusRegister() const                                { return m_u8LCDStatus;                                     }
+    void            SetLCDStatusRegister( ubyte u8Data )                        { m_u8LCDStatus = u8Data & 0x78;                            } // Lower 3 bits are read-only, msb is unused
+    
+    ubyte           GetScrollXRegister() const                                  { return m_u8ScrollX;                                       }
+    void            SetScrollXRegister( ubyte u8Data )                          { m_u8ScrollX = u8Data;                                     }
+
+    ubyte           GetScrollYRegister() const                                  { return m_u8ScrollY;                                       }
+    void            SetScrollYRegister( ubyte u8Data )                          { m_u8ScrollY = u8Data;                                     }
+
+    ubyte           GetLCDScanlineRegister() const                              { return m_u8LCDScanline;                                   }
+    void            SetLCDScanlineRegister( ubyte u8Data )                      { m_u8LCDScanline = 0;                                      } // Writing to scanline resets it
+
+    ubyte           GetLCDYCompareRegister() const                              { return m_u8LCDYCompare;                                   }
+    void            SetLCDYCompareRegister( ubyte u8Data )                      { m_u8LCDYCompare = u8Data;                                 }
+    
+    ubyte           GetBGPaletteRegister() const                                { return m_u8BGPalette;                                     }
+    void            SetBGPaletteRegister( ubyte u8Data )                        { m_u8BGPalette = u8Data;                                   }
+    
+    ubyte           GetObjectPalette0Register() const                           { return m_u8ObjectPalette0;                                }
+    void            SetObjectPalette0Register( ubyte u8Data )                   { m_u8ObjectPalette0 = u8Data;                              }
+    
+    ubyte           GetObjectPalette1Register() const                           { return m_u8ObjectPalette1;                                }
+    void            SetObjectPalette1Register( ubyte u8Data )                   { m_u8ObjectPalette1 = u8Data;                              }
+    
+    ubyte           GetWindowYRegister() const                                  { return m_u8WindowY;                                       }
+    void            SetWindowYRegister( ubyte u8Data )                          { m_u8WindowY = u8Data;                                     }
+    
+    ubyte           GetWindowXRegister() const                                  { return m_u8WindowX;                                       }
+    void            SetWindowXRegister( ubyte u8Data )                          { m_u8WindowX = u8Data;                                     }
+    
+    ubyte           GetDMATransferRegister() const                              { return m_u8DMATransfer;                                   }
+    void            SetDMATransferRegister( ubyte u8Data );
 private:
-    inline bool     IsLCDEnabled( ubyte u8LCDControl ) const                                        { return 0 != ( u8LCDControl & 0x80 );                  }
-    inline bool     IsLCDInterruptEnabled( ubyte u8LCDStatus, LCDStatInterrupt interrupt ) const    { return 0 != ( u8LCDStatus & interrupt );              }
+    inline bool     IsLCDEnabled() const                                        { return 0 != ( m_u8LCDControl & 0x80 );                    }
+    inline bool     IsLCDInterruptEnabled( LCDStatInterrupt interrupt ) const   { return 0 != ( m_u8LCDStatus & interrupt );                }
 
-    inline bool     IsBackgroundEnabled( ubyte u8LCDControl ) const                                 { return 0 != ( u8LCDControl & 0x01 );                  }
-    inline bool     IsWindowEnabled( ubyte u8LCDControl ) const                                     { return 0 != ( u8LCDControl & 0x20 );                  }
-    inline bool     IsSpriteEnabled( ubyte u8LCDControl ) const                                     { return 0 != ( u8LCDControl & 0x02 );                  }
+    inline bool     IsBackgroundEnabled() const                                 { return 0 != ( m_u8LCDControl & 0x01 );                    }
+    inline bool     IsWindowEnabled() const                                     { return 0 != ( m_u8LCDControl & 0x20 );                    }
+    inline bool     IsSpriteEnabled() const                                     { return 0 != ( m_u8LCDControl & 0x02 );                    }
 
-    inline ubyte    GetSpriteSize( ubyte u8LCDControl ) const                                       { return 0 != ( u8LCDControl & 0x04 ) ? 16 : 8;         }
-    inline bool     GetTileDataSelect( ubyte u8LCDControl ) const                                   { return 0 != ( u8LCDControl & 0x10 );                  } /*(0=8800-97FF, 1=8000-8FFF)*/
-    inline bool     GetBackgroundTileMapSelect( ubyte u8LCDControl ) const                          { return 0 != ( u8LCDControl & 0x08 );                  } /*(0=9800-9BFF, 1=9C00-9FFF)*/
-    inline bool     GetWindowTileMapSelect( ubyte u8LCDControl ) const                              { return 0 != ( u8LCDControl & 0x40 );                  } /*(0=9800-9BFF, 1=9C00-9FFF)*/
+    inline ubyte    GetSpriteSize() const                                       { return 0 != ( m_u8LCDControl & 0x04 ) ? 16 : 8;           }
+    inline bool     GetTileDataSelect() const                                   { return 0 != ( m_u8LCDControl & 0x10 );                    } /*(0=8800-97FF, 1=8000-8FFF)*/
+    inline bool     GetBackgroundTileMapSelect() const                          { return 0 != ( m_u8LCDControl & 0x08 );                    } /*(0=9800-9BFF, 1=9C00-9FFF)*/
+    inline bool     GetWindowTileMapSelect() const                              { return 0 != ( m_u8LCDControl & 0x40 );                    } /*(0=9800-9BFF, 1=9C00-9FFF)*/
 
-    inline ubyte    GetLCDMode( ubyte u8LCDStatus ) const                                           { return u8LCDStatus & 0x03;                            }
-    inline void     SetLCDMode( ubyte& u8LCDStatus, LCDMode mode ) const                            { u8LCDStatus &= 0xFC; u8LCDStatus |= ( mode & 0x03 );  }
+    inline ubyte    GetLCDMode() const                                          { return m_u8LCDStatus & 0x03;                              }
+    inline void     SetLCDMode(LCDMode mode )                                   { m_u8LCDStatus &= 0xFC; m_u8LCDStatus |= ( mode & 0x03 );  }
 
-    inline bool     GetCoincidenceFlag( ubyte u8LCDStatus ) const                                   { return 0 != ( u8LCDStatus & 0x04 );                   }
-    inline void     SetCoincidenceFlag( ubyte& u8LCDStatus, bool bFlag ) const                      { u8LCDStatus &= 0xFB; u8LCDStatus |= ( bFlag << 2);    }
+    inline bool     GetCoincidenceFlag() const                                  { return 0 != ( m_u8LCDStatus & 0x04 );                     }
+    inline void     SetCoincidenceFlag(bool bFlag )                             { m_u8LCDStatus &= 0xFB; m_u8LCDStatus |= ( bFlag << 2);    }
 
-    void            DoScanline( ubyte& u8LCDControl, ubyte& u8LCDStatus );
-    void            DrawLine( ubyte& u8LCDControl, ubyte u8Scanline );
-    void            DrawBackground( ubyte u8LCDControl, ubyte u8Scanline );
-    void            DrawWindow( ubyte u8LCDControl, ubyte u8Scanline );
-    void            DrawSprites( ubyte u8LCDControl, ubyte u8Scanline );
+    void            DoScanline();
+    void            DrawLine();
+    void            DrawBackground();
+    void            DrawWindow();
+    void            DrawSprites();
     uint16          GetMapTileData( uint16 u16MapAddr, uint16 u16DataAddr, ubyte u8TileX, ubyte u8TileY, ubyte u8Row );
     uint16          GetSpriteTileData( ubyte u8TileIndex, ubyte u8Row );
     uint16          GetTileData( uint16 u16DataAddr );
@@ -136,6 +172,20 @@ private:
 private:
     GBEmulator*     m_pEmulator;
     GBMem*          m_pMem;
+
+    // GPU registers
+    ubyte           m_u8LCDControl;
+    ubyte           m_u8LCDStatus;
+    ubyte           m_u8ScrollX;
+    ubyte           m_u8ScrollY;
+    ubyte           m_u8LCDScanline;
+    ubyte           m_u8LCDYCompare;
+    ubyte           m_u8DMATransfer;
+    ubyte           m_u8BGPalette;
+    ubyte           m_u8ObjectPalette0;
+    ubyte           m_u8ObjectPalette1;
+    ubyte           m_u8WindowY;
+    ubyte           m_u8WindowX;
 
     LCDColor        m_PaletteLookup[ 4 ];
     uint32          m_u32ScanTime;

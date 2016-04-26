@@ -114,8 +114,6 @@ void GBEmulator::Initialize()
 
     m_pCartridge    = new GBCartridge( m_pMem );
 
-    m_pCpu->Initialize();
-
     TTF_Init();
 
     TTF_Font* pFont = TTF_OpenFont( "assets\\Charybdis.ttf", 24 );
@@ -320,7 +318,7 @@ void GBEmulator::Update()
                 }
 
                 // Set the next frame render time
-                m_fNextFrame = m_fElapsedTime - fDelta + k_fFrameTime;
+                m_fNextFrame = m_fElapsedTime + k_fFrameTime - fDelta;
 
                 Step();
 
@@ -330,8 +328,8 @@ void GBEmulator::Update()
                 GTimer()->Update();
 
                 // If the cart has a battery and something has changed, we need to update our .sav file
-                if( m_pCartridge->HasBattery()
-                    && m_pCartridge->IsRamDirty() )
+                if(     m_pCartridge->HasBattery()
+                    &&  m_pCartridge->IsRamDirty() )
                 {
                     m_pCartridge->FlushRamToSaveFile( GB_BATTERY_DIRECTORY );
                 }

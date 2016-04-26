@@ -34,9 +34,13 @@ GBCpu::GBCpu( GBMem* pMemoryModule, GBTimer* pTimer ) :
     m_bInitialized( false ),
     m_bHalt( false ),
     m_bStop( false ),
+    m_bIME( false ),
+    m_u8InterruptFlags( 0 ),
+    m_u8InterruptEnable( 0 ),
     m_DebugPC( 0 ),
     m_u32HistoryIndex( 0 )
 {
+    Initialize();
 }
     
 //----------------------------------------------------------------------------------------------------
@@ -50,6 +54,9 @@ GBCpu::~GBCpu()
 //----------------------------------------------------------------------------------------------------
 void GBCpu::Initialize()
 {
+    SetMMIORegisterHandlers<GBCpu>( m_pMem, MMIOInterruptFlags,  &GBCpu::GetInterruptFlagsRegister,  &GBCpu::SetInterruptFlagsRegsiter );
+    SetMMIORegisterHandlers<GBCpu>( m_pMem, MMIOInterruptEnable, &GBCpu::GetInterruptEnableRegister, &GBCpu::SetInterruptEnableRegsiter );
+
     // Initialize regular opcode handlers
     m_OpcodeHandlers[ 0x00 ] = &GBCpu::OpNOP;
     m_OpcodeHandlers[ 0x01 ] = &GBCpu::OpLD_rr_nn<BC>;
@@ -594,7 +601,8 @@ void GBCpu::Reset()
     m_bHalt             = false;
     m_bStop             = false;
 
-    m_pMem->WriteMMIO( MMIOBiosDisabled, 0x00 );
+    m_u8InterruptFlags  = 0;
+    m_u8InterruptEnable = 0;
 
     /*
     // Init code to skip bios
@@ -727,14 +735,8 @@ int GBCpu::ExecuteOpcode()
 //----------------------------------------------------------------------------------------------------
 void GBCpu::RaiseInterrupt( Interrupt interrupt )
 {
-    // Read the interrupt flag byte
-    ubyte u8InterruptFlags = m_pMem->ReadMMIO( MMIOInterruptFlags );
-
     // Set the interrupt request
-    u8InterruptFlags |= interrupt;
-
-    // Write the interrupt flag byte back to MMIO
-    m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags );
+    m_u8InterruptFlags |= interrupt;
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -742,66 +744,63 @@ int GBCpu::HandleInterrupts()
 {
     PROFILE( "Cpu::HandleInterrupts" );
 
-    ubyte u8InterruptFlags  = m_pMem->ReadMMIO( MMIOInterruptFlags );
-    ubyte u8InterruptEnable = m_pMem->ReadMMIO( MMIOInterruptEnable );
-
-    if(     u8InterruptEnable & VBlank
-        &&  u8InterruptFlags & VBlank )
+    if(     m_u8InterruptEnable & VBlank
+        &&  m_u8InterruptFlags & VBlank )
     {
         m_bHalt = false;
 
         if( m_bIME )
         {
-            m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags &= ~VBlank );
+            m_u8InterruptFlags &= ~VBlank;
             return ExecuteInterrupt( 0x40 );
         }
     }
     
-    if(     u8InterruptEnable & LCDStatus
-        &&  u8InterruptFlags & LCDStatus )
+    if(     m_u8InterruptEnable & LCDStatus
+        &&  m_u8InterruptFlags & LCDStatus )
     {
         m_bHalt = false;
         
         if( m_bIME )
         {
-            m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags &= ~LCDStatus );
+            m_u8InterruptFlags &= ~LCDStatus;
             return ExecuteInterrupt( 0x48 );
         }
     }
     
-    if(     u8InterruptEnable & Timer
-        &&  u8InterruptFlags & Timer )
+    if(     m_u8InterruptEnable & Timer
+        &&  m_u8InterruptFlags & Timer )
     {
         m_bHalt = false;
         
         if( m_bIME )
         {
-            m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags &= ~Timer );
+            m_u8InterruptFlags &= ~Timer;
             return ExecuteInterrupt( 0x50 );
         }
     }
     
-    if(     u8InterruptEnable & Serial
-        &&  u8InterruptFlags & Serial )
+    if(     m_u8InterruptEnable & Serial
+        &&  m_u8InterruptFlags & Serial )
     {
         m_bHalt = false;
         
         if( m_bIME )
         {
-            m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags &= ~Serial );
+            m_u8InterruptFlags &= ~Serial;
             return ExecuteInterrupt( 0x58 );
         }
     }
     
-    if(     u8InterruptEnable & Input
-        &&  u8InterruptFlags & Input )
+    if(     m_u8InterruptEnable & Input
+        &&  m_u8InterruptFlags & Input )
     {
         m_bHalt = false;
         m_bStop = false;
         
         if( m_bIME )
         {
-            m_pMem->WriteMMIO( MMIOInterruptFlags, u8InterruptFlags &= ~Input );
+            m_u8InterruptFlags &= ~Input;
             return ExecuteInterrupt( 0x60 );
         }
     }

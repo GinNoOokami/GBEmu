@@ -22,8 +22,13 @@
 GBJoypad::GBJoypad( GBEmulator* pEmulator, GBMem* pMemoryModule ) :
     m_pEmulator( pEmulator ),
     m_pMem( pMemoryModule ),
+    m_u8StateRegister( -1 ),
     m_u32KeyStatus( -1 )
 {
+    m_pMem->RegisterMMIOHandlers( MMIOJoypad,
+                                  this,
+                                  static_cast<MMIOReadHandler>( &GBJoypad::GetStateRegister ),
+                                  static_cast<MMIOWriteHandler>( &GBJoypad::SetStateRegister ) );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -35,8 +40,8 @@ GBJoypad::~GBJoypad()
 //----------------------------------------------------------------------------------------------------
 void GBJoypad::Reset()
 {
+    m_u8StateRegister = -1;
     m_u32KeyStatus = -1;
-    m_pMem->WriteMMIO( MMIOJoypad, 0xFF );
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -54,23 +59,21 @@ void GBJoypad::Update()
     // Left |__|B_______ 1|        |
     // Right|__|A_______ 0|________|
 
-    ubyte u8JoypadStatus = m_pMem->ReadMMIO( MMIOJoypad );
-
     // By default, input will poll high (ignoring bits 4 and 5)
-    u8JoypadStatus |= 0xcf;
+    m_u8StateRegister |= 0xcf;
 
     // Check if we need to poll the input
-    if( 0x30 != ( u8JoypadStatus & 0x30 ) )
+    if( 0x30 != ( m_u8StateRegister & 0x30 ) )
     {
         int buttons = 0;
-        if( 0 == ( u8JoypadStatus & 0x20 ) )
+        if( 0 == ( m_u8StateRegister & 0x20 ) )
         {
             buttons |= ( m_u32KeyStatus & ButtonA );
             buttons |= ( m_u32KeyStatus & ButtonB );
             buttons |= ( m_u32KeyStatus & ButtonSelect );
             buttons |= ( m_u32KeyStatus & ButtonStart );
         }
-        else if( 0 == ( u8JoypadStatus & 0x10 ) )
+        else if( 0 == ( m_u8StateRegister & 0x10 ) )
         {
             // Shift right by four to offset the upper bits of the bitmask into the lower four bits of the register
             buttons |= ( m_u32KeyStatus & ButtonRight ) >> 4;
@@ -79,18 +82,15 @@ void GBJoypad::Update()
             buttons |= ( m_u32KeyStatus & ButtonDown ) >> 4;
         }
 
-        u8JoypadStatus &= ( 0xf0 | buttons );
+        m_u8StateRegister &= ( 0xf0 | buttons );
 
         // Raise an interrupt if any of the edges fell low
         // TODO: Input state currently does not persist across update cycles, so this interrupt may trigger more than intended
-        if( 0x0f != ( u8JoypadStatus & 0x0f ) )
+        if( 0x0f != ( m_u8StateRegister & 0x0f ) )
         {
             m_pEmulator->RaiseInterrupt( Input );
         }
     }
-
-    // Update the joypad register
-    m_pMem->WriteMMIO( MMIOJoypad, u8JoypadStatus );
 }
 
 //----------------------------------------------------------------------------------------------------
