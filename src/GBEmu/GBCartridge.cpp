@@ -10,6 +10,9 @@
 
 #include "GBCartridge.h"
 
+#include <string.h>
+#include <fstream>
+
 #include "emutypes.h"
 #include "GBMem.h"
 #include "GBMemBankController0.h"
@@ -17,9 +20,7 @@
 #include "GBMemBankController2.h"
 #include "GBMemBankController3.h"
 
-#include <memory.h>
-#include <assert.h>
-#include <string.h>
+#include "CLog.h"
 
 //====================================================================================================
 // Static initializers
@@ -61,27 +62,29 @@ void GBCartridge::Reset()
 }
 
 //----------------------------------------------------------------------------------------------------
-bool GBCartridge::LoadFromFile( const char *szFilepath, const char* szBatteryDirectory )
+bool GBCartridge::LoadFromFile( const char* szFilepath, const char* szBatteryDirectory )
 {
-    FILE*    pFile      = NULL;
-    bool    bLoaded     = false;
-        
-    fopen_s( &pFile, szFilepath, "rb" );
-    if( NULL != pFile )
+    bool bLoaded = false;
+
+    ifstream oFile( szFilepath, ios::binary );
+    if( oFile )
     {
         ubyte u8CartridgeHeader[ 0x150 ];
+        oFile.read( reinterpret_cast<char*>( u8CartridgeHeader ), sizeof( u8CartridgeHeader ) );
 
-        fread_s( u8CartridgeHeader, sizeof( u8CartridgeHeader ), sizeof( u8CartridgeHeader ), 1, pFile );
-        
         if( ValidateCartridgeHeader( u8CartridgeHeader ) )
         {
             m_szBatteryDirectory = szBatteryDirectory;
 
             LoadCartridgeHeader( u8CartridgeHeader );
-            bLoaded = LoadCartridge( pFile );
+            bLoaded = LoadCartridge( oFile );
         }
 
-        fclose( pFile );
+        oFile.close();
+    }
+    else
+    {
+        Log()->Write( LOG_COLOR_YELLOW, "Unable to load ROM file!" );
     }
 
     return bLoaded;
@@ -116,41 +119,35 @@ bool GBCartridge::IsRamDirty() const
 //----------------------------------------------------------------------------------------------------
 void GBCartridge::FlushRamToSaveFile( const char *szBatteryDirectory )
 {
-    FILE* pBatteryFile              = NULL;
-    char szBatteryFilepath[ 1024 ]  = { 0 };
+    string oPath;
+    oPath.append( szBatteryDirectory )
+         .append( m_oHeader.szTitle )
+         .append( ".sav" );
 
-    sprintf_s( szBatteryFilepath, "%s%s%s", szBatteryDirectory, m_oHeader.szTitle, ".sav" );
-
-    fopen_s( &pBatteryFile, szBatteryFilepath, "wb" );
-    if( NULL != pBatteryFile )
+    ofstream oFile( oPath, ios::binary );
+    if( oFile )
     {
-        fwrite( m_pRam, GetRamSize(), 1, pBatteryFile );
-
-        fclose( pBatteryFile );
+        oFile.write( reinterpret_cast<char*>( m_pRam ), GetRamSize() );
+        oFile.close();
+    }
+    else
+    {
+        Log()->Write( LOG_COLOR_YELLOW, "Unable to write save file!" );
     }
 }
 
 //----------------------------------------------------------------------------------------------------
 void GBCartridge::Unload()
 {
-    if( NULL != m_pRom )
-    {
-        delete m_pRom;
-        m_pRom = NULL;
-    }
+    delete m_pRom;
+    m_pRom = NULL;
 
-    if( NULL != m_pRam )
-    {
-        delete m_pRam;
-        m_pRam = NULL;
-    }
+    delete m_pRam;
+    m_pRam = NULL;
 
-    if( NULL != m_pMemBankController )
-    {
-        m_pMem->SetMemBankController( NULL );
-        delete m_pMemBankController;
-        m_pMemBankController = NULL;
-    }
+    m_pMem->SetMemBankController( NULL );
+    delete m_pMemBankController;
+    m_pMemBankController = NULL;
 
     m_szBatteryDirectory = NULL;
 
@@ -177,7 +174,7 @@ bool GBCartridge::ValidateCartridgeHeader( ubyte* pHeaderData )
 }
 
 //----------------------------------------------------------------------------------------------------
-bool GBCartridge::LoadCartridge( FILE* pFile )
+bool GBCartridge::LoadCartridge( ifstream& oFile )
 {
     uint32 u32RomSize = GetRomSize();
     uint32 u32RamSize = GetRamSize();
@@ -185,9 +182,11 @@ bool GBCartridge::LoadCartridge( FILE* pFile )
     m_pRom = new ubyte[ u32RomSize ];
     memset( m_pRom, 0, u32RomSize );
 
-    rewind( pFile );
-    fread_s( m_pRom, u32RomSize, 1, u32RomSize, pFile );
+    oFile.clear();
+    oFile.seekg( 0 );
+    oFile.read( reinterpret_cast<char*>( m_pRom ), u32RomSize );
 
+    // Minimum 2k ram
     if( u32RamSize < 2048 )
     {
         u32RamSize = 2048;
@@ -204,21 +203,26 @@ bool GBCartridge::LoadCartridge( FILE* pFile )
 //----------------------------------------------------------------------------------------------------
 void GBCartridge::LoadBattery()
 {
-    FILE*    pBatteryFile                = NULL;
-    char    szBatteryFilepath[ 1024 ]    = { 0 };
-
     if( m_szBatteryDirectory )
     {
-        sprintf_s( szBatteryFilepath, "%s%s%s", m_szBatteryDirectory, m_oHeader.szTitle, ".sav" );
+        string oPath;
+        oPath.append( m_szBatteryDirectory )
+             .append( m_oHeader.szTitle )
+             .append( ".sav" );
 
-        fopen_s( &pBatteryFile, szBatteryFilepath, "rb" );
-        if( NULL != pBatteryFile )
+        ifstream oFile( oPath, ios::binary );
+        if( oFile )
         {
             uint32 u32RamSize = GetRamSize();
+            oFile.read( reinterpret_cast<char*>( m_pRam ), u32RamSize );
 
-            fread_s( m_pRam, u32RamSize, 1, u32RamSize, pBatteryFile );
+            Log()->Write( LOG_COLOR_WHITE, "Save file loaded." );
 
-            fclose( pBatteryFile );
+            oFile.close();
+        }
+        else
+        {
+            Log()->Write( LOG_COLOR_YELLOW, "Save file could not be loaded!" );
         }
     }
 }

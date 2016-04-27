@@ -8,10 +8,7 @@ int main( int argc, char* argv[] )
     Log()->Initialize();
 
     GBEmulator oEmulator;
-
-    oEmulator.Initialize();
     oEmulator.Run();
-    oEmulator.Terminate();
 
     Log()->Terminate();
 

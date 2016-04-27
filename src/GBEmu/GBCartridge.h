@@ -13,7 +13,13 @@
 
 #include "emutypes.h"
 
-#include <stdio.h>
+#include <fstream>
+
+//====================================================================================================
+// Namespaces
+//====================================================================================================
+
+using namespace std;
 
 //====================================================================================================
 // Foward Declarations
@@ -57,7 +63,7 @@ public:
 
     void                    Reset();
 
-    bool                    LoadFromFile( const char* szFilepath, const char* szBatteryDirectory = NULL );
+    bool                    LoadFromFile( const char* szFilepath, const char* szBatteryDirectory );
     bool                    HasBattery() const;
     bool                    IsRamDirty() const;
     void                    FlushRamToSaveFile( const char* szBatteryDirectory );
@@ -69,7 +75,7 @@ public:
 private:
     bool                    ValidateCartridgeHeader( ubyte* pHeaderData );
     void                    LoadCartridgeHeader( ubyte* pHeaderData );
-    bool                    LoadCartridge( FILE* pFile );
+    bool                    LoadCartridge( ifstream& oFile );
     void                    LoadBattery();
     IGBMemBankController*   CreateMemBankController( ubyte u8CartridgeType );
     uint32                  GetRomSize() const;

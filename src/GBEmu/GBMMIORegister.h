@@ -89,10 +89,10 @@ void GBMMIORegister::SetMMIORegisterHandlers( GBMem* pMem, MMIORegister eMMIOReg
 class GBNullMMIORegister : public GBMMIORegister
 {
 public:
-    GBNullMMIORegister( void ) { m_u8Data = 0x00; }
+    GBNullMMIORegister( void )                              { m_u8Data = 0x00;      }
     virtual ~GBNullMMIORegister() {}
 
-    void    WriteRegisterNoop( ubyte u8Data ) { m_u8Data = u8Data; }
+    void    WriteRegisterNoop( ubyte u8Data )               { m_u8Data = u8Data;    }
     ubyte   ReadRegisterNoop() const { return m_u8Data; }
 
 private:

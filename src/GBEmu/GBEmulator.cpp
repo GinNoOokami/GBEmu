@@ -27,6 +27,7 @@
 #include <SDL_ttf.h>
 #include <direct.h>
 #include <io.h>
+#include <fstream>
 
 // Disable warnings in external library
 #pragma warning( disable:4996 )
@@ -61,6 +62,7 @@ GBEmulator::GBEmulator() :
     m_pWindow( NULL ),
     m_pRenderer( NULL )
 {
+    Initialize();
 }
 
 //----------------------------------------------------------------------------------------------------
@@ -111,7 +113,6 @@ void GBEmulator::Initialize()
     m_pCpu          = new GBCpu( m_pMem, m_pTimer );
     m_pGpu          = new GBGpu( this, m_pMem );
     m_pJoypad       = new GBJoypad( this, m_pMem );
-
     m_pCartridge    = new GBCartridge( m_pMem );
 
     TTF_Init();
@@ -176,32 +177,19 @@ void GBEmulator::Run()
     m_bRunning = true;
 
 #ifdef _DEBUG
-    FILE * file = NULL;
-    char szBuffer[ 1024 ];
-
-    fopen_s( &file, "debug_load.ini", "r" );
-    if( NULL != file )
+    string oPath;
+    ifstream oFile( "debug_load.ini" );
+    if( oFile )
     {
-        while( fgets( szBuffer, 1024, file ) )
+        while( getline( oFile, oPath ) )
         {
-            if(     strlen( szBuffer ) > 0
-                &&  szBuffer[ 0 ] != ';' )
+            if( oPath.front() != ';' )
             {
-                char* p = szBuffer;
-                while( NULL != *(p++) )
-                {
-                    // NULL out newline char
-                    if( *p == '\n' )
-                    {
-                        *p = '\0';
-                    }
-                }
-
-                LoadCartridge( szBuffer );
+                LoadCartridge( oPath.c_str() );
                 break;
             }
         }
-        fclose( file );
+        oFile.close();
     }
 #endif
 
