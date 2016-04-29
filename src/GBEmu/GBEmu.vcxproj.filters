@@ -87,6 +87,9 @@
     <ClInclude Include="GBMMIORegister.h">
       <Filter>Emulator\Modules</Filter>
     </ClInclude>
+    <ClInclude Include="GBUserPrefs.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="GBEmulator.cpp">
@@ -143,6 +146,9 @@
     </ClCompile>
     <ClCompile Include="..\lib\NFont\SDL_FontCache.c">
       <Filter>NFont</Filter>
+    </ClCompile>
+    <ClCompile Include="GBUserPrefs.cpp">
+      <Filter>Emulator</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -119,6 +119,7 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     <ClInclude Include="GBMemBankController3.h" />
     <ClInclude Include="GBMMIORegister.h" />
     <ClInclude Include="GBTimer.h" />
+    <ClInclude Include="GBUserPrefs.h" />
     <ClInclude Include="IGBMemBankController.h" />
   </ItemGroup>
   <ItemGroup>
@@ -144,6 +145,7 @@ xcopy /y ..\assets\* $(OutDir)\assets\</Command>
     <ClCompile Include="GBMemBankController2.cpp" />
     <ClCompile Include="GBMemBankController3.cpp" />
     <ClCompile Include="GBTimer.cpp" />
+    <ClCompile Include="GBUserPrefs.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

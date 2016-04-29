@@ -21,6 +21,23 @@ typedef signed short    sint16;
 typedef unsigned char   ubyte;
 typedef signed char     sbyte;
 
+//====================================================================================================
+// Global enums
+//====================================================================================================
+
+enum GBGlobalConstants
+{
+    kGBBiosSizeBytes        = 0x100,    // GB bios is 256 bytes
+    kGBBiosXorChecksum      = 0xF4,     // Pre-calculated 8 bit XOR checksum of GB bios
+    kGBTotalMemSizeBytes    = 0x10000,  // GB has 64k total memory (~16k ROM, ~16k swap ROM, ~8k swap RAM, ~8k RAM, ~16k other)
+    kGBMMIORegisterCount    = 0x100,    // Address space 0xFF00~0xFFFF are reserved for MMIO registers
+};
+
+
+//====================================================================================================
+// Misc defines
+//====================================================================================================
+
 #define RUN_PROFILE 0
 
 inline void _assert( const char* expression, const char* file, int line )

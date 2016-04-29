@@ -18,6 +18,7 @@
 #include "GBTimer.h"
 #include "GBJoypad.h"
 #include "GBCartridge.h"
+#include "GBUserPrefs.h"
 
 #include "CProfileManager.h"
 #include "CTimer.h"
@@ -89,6 +90,9 @@ void GBEmulator::Initialize()
         fprintf( stderr, "Failed to initialize window!\n" );
         exit( 1 );
     }
+
+    // Load the user preferences
+    UserPrefs()->Load();
 
     SDL_SetWindowTitle( m_pWindow, "Gameboy Emulator" );
 

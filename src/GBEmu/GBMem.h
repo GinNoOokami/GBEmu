@@ -77,11 +77,11 @@ private:
     inline void             SetBiosDisabledRegister( ubyte u8Data )                         { m_bBiosEnabled = ( 0 == u8Data ); }
 
 private:
-    static ubyte            GBBios[ 0x100 ];
+    ubyte                   m_pu8GBBios[ kGBBiosSizeBytes ];
 
-    ubyte                   m_Memory[ 0x10000 ];
+    ubyte                   m_pu8Memory[ kGBTotalMemSizeBytes ];
 
-    GBNullMMIORegister      m_oNullMMIORegister[ 0x100 ];
+    GBNullMMIORegister      m_oNullMMIORegister[ kGBMMIORegisterCount ];
     MMIOReadHandlers        m_MMIROReadHandlers;
     MMIOWriteHandlers       m_MMIOWriteHandlers;
 

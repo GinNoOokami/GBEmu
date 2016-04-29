@@ -13,6 +13,7 @@
 #include "emutypes.h"
 #include "GBMem.h"
 #include "GBTimer.h"
+#include "GBUserPrefs.h"
 #include "CProfileManager.h"
 #include "CLog.h"
 
@@ -585,17 +586,35 @@ void GBCpu::Terminate()
 //----------------------------------------------------------------------------------------------------
 void GBCpu::Reset()
 {
-    m_PC                = 0;
-    m_SP                = 0xFFFF;
+    if( GBUserPrefs::Instance()->IsBiosEnabled() )
+    {
+        m_PC = 0;
+        m_SP = 0xFFFF;
 
-    m_Registers[ A ]    = 0;
-    m_Registers[ B ]    = 0;
-    m_Registers[ C ]    = 0;
-    m_Registers[ D ]    = 0;
-    m_Registers[ E ]    = 0;
-    m_Registers[ F ]    = 0;
-    m_Registers[ H ]    = 0;
-    m_Registers[ L ]    = 0;
+        m_Registers[ A ] = 0;
+        m_Registers[ B ] = 0;
+        m_Registers[ C ] = 0;
+        m_Registers[ D ] = 0;
+        m_Registers[ E ] = 0;
+        m_Registers[ F ] = 0;
+        m_Registers[ H ] = 0;
+        m_Registers[ L ] = 0;
+    }
+    else
+    {
+        // Register state after bios has executed
+        m_PC = 0x100;
+        m_SP = 0xFFFE;
+
+        m_Registers[ A ] = 0x01;
+        m_Registers[ B ] = 0x00;
+        m_Registers[ C ] = 0x13;
+        m_Registers[ D ] = 0x00;
+        m_Registers[ E ] = 0xD8;
+        m_Registers[ F ] = 0xB0;
+        m_Registers[ H ] = 0x01;
+        m_Registers[ L ] = 0x4D;
+    }
 
     m_bIME              = true;
     m_bHalt             = false;
