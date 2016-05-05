@@ -35,6 +35,7 @@ GBMem::GBMem( void ) :
 
     SetMMIORegisterHandlers<GBMem>( this, MMIOBiosDisabled, &GBMem::GetBiosDisabledRegister, &GBMem::SetBiosDisabledRegister );
 
+    // Load the bios if necessary
     memset( m_pu8GBBios, 0, sizeof( m_pu8GBBios ) );
     if( UserPrefs()->IsBiosEnabled() )
     {
@@ -57,6 +58,18 @@ void GBMem::Reset()
     m_bBiosEnabled          = GBUserPrefs::Instance()->IsBiosEnabled();
 
     memset( m_pu8Memory, 0, sizeof( m_pu8Memory ) );
+
+    // Reset all of the MMIO handlers
+    // TODO: Investigate if setting predetermined values is necessary when skipping bios
+    for( int i = MMIORegisterStart; i <= MMIORegisterEnd; ++i )
+    {
+        auto callback = m_MMIOWriteHandlers[ (MMIORegister)i ];
+        auto pController = callback.first;
+        auto pfnHandler = callback.second;
+
+        // Invoke the register handler
+        ( pController->*pfnHandler )( 0 );
+    }
 }
 
 //----------------------------------------------------------------------------------------------------

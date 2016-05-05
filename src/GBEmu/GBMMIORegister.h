@@ -93,7 +93,7 @@ public:
     virtual ~GBNullMMIORegister() {}
 
     void    WriteRegisterNoop( ubyte u8Data )               { m_u8Data = u8Data;    }
-    ubyte   ReadRegisterNoop() const { return m_u8Data; }
+    ubyte   ReadRegisterNoop() const                        { return m_u8Data;      }
 
 private:
     ubyte   m_u8Data;
